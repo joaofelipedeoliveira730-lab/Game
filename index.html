@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Kart SNES Online</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+        body { background: #050505; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        h1 { color: #00ff41; text-shadow: 0 0 10px #00ff41; margin-bottom: 15px; font-size: 2rem; }
+        
+        /* Menu de Salas */
+        #lobby { background: #111; border: 3px solid #00ff41; padding: 25px; border-radius: 10px; width: 450px; text-align: center; box-shadow: 0 0 20px rgba(0,255,65,0.3); }
+        .menu-section { background: #1a1a1a; padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #333; text-align: left; }
+        h3 { color: #ff00ff; margin-bottom: 10px; font-size: 1.1rem; }
+        p { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
+        input { width: 100%; padding: 10px; background: #222; border: 2px solid #00ff41; color: #fff; font-size: 1rem; border-radius: 5px; margin-bottom: 10px; }
+        button { width: 100%; padding: 12px; background: #ff00ff; border: none; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 5px; box-shadow: 0 4px #990099; }
+        button:active { transform: translateY(4px); box-shadow: none; }
+        .peer-id-display { font-size: 1.2rem; color: #00ffff; font-weight: bold; text-align: center; background: #000; padding: 5px; border-radius: 4px; }
+
+        /* Tela do Jogo e Elementos 3D Fake (Pseudo-3D) */
+        #game-container { display: none; position: relative; width: 800px; height: 450px; border: 4px solid #fff; background: #000; }
+        canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+
+        /* HUD / Placar */
+        #hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; }
+        .panel { background: rgba(0, 0, 0, 0.85); padding: 10px; border-radius: 5px; border: 2px solid #ff00ff; font-size: 0.9rem; }
+        #status-txt { color: #00ff41; font-weight: bold; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h1>SUPER KART SNES ONLINE</h1>
+
+    <div id="lobby">
+        <div class="menu-section">
+            <h3>1. Seu ID da Sala</h3>
+            <p>Envie este código para o seu amigo entrar na sua partida:</p>
+            <div id="my-id-view" class="peer-id-display">Carregando ID...</div>
+        </div>
+
+        <div class="menu-section">
+            <h3>2. Entrar em uma Sala</h3>
+            <p>Cole o ID do seu amigo aqui embaixo e clique em conectar:</p>
+            <input type="text" id="peer-id-input" placeholder="Cole o ID do Host aqui">
+            <button onclick="connectToHost()">CONECTAR NA SALA</button>
+        </div>
+        <div id="status-txt">Aguardando rede P2P...</div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="400" height="225"></canvas>
+        <div id="hud">
+            <div class="panel">
+                <p style="color:#ff00ff;">RANKING</p>
+                <div id="rank-board">1° - Carregando...</div>
+            </div>
+            <div class="panel">
+                <p id="room-role">Conexão: P2P</p>
+                <p id="ping-view">Ping: -- ms</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusTxt = document.getElementById('status-txt');
+
+        let peer;
+        let conn;
+        let isHost = false;
+        let gameStarted = false;
+
+        // Configuração física e visual estilo SNES (Pseudo-3D / Projeção de Linhas)
+        const keys = {};
+        const player = { x: 0, y: 100, speed: 0, angle: 0, color: '#ff3333', name: 'Você' };
+        const rival = { x: 20, y: 120, speed: 0, angle: 0, color: '#3333ff', name: 'Rival' };
+
+        // Inicializa o PeerJS para gerar a sala
+        peer = new Peer();
+
+        peer.on('open', (id) => {
+            document.getElementById('my-id-view').innerText = id;
+            statusTxt.innerText = "Pronto! Crie uma sala ou entre em uma.";
+        });
+
+        // Caso você seja o HOST e alguém se conecte a você
+        peer.on('connection', (connection) => {
+            conn = connection;
+            isHost = true;
+            setupChat();
+        });
+
+        // Caso você seja o CLIENTE e queira se conectar ao Host
+        function connectToHost() {
+            const hostId = document.getElementById('peer-id-input').value.trim();
+            if(!hostId) return alert("Digite um ID válido!");
+            
+            statusTxt.innerText = "Conectando...";
+            conn = peer.connect(hostId);
+            isHost = false;
+            setupChat();
+        }
+
+        // Configura o canal de dados em tempo real entre as salas
+        function setupChat() {
+            conn.on('open', () => {
+                statusTxt.innerText = "Conectado! Iniciando motores...";
+                setTimeout(() => {
+                    document.getElementById('lobby').style.display = 'none';
+                    document.getElementById('game-container').style.display = 'block';
+                    gameStarted = true;
+                    initGame();
+                }, 1000);
+            });
+
+            // Recebe os dados de posição do outro jogador na sala
+            conn.on('data', (data) => {
+                rival.x = data.x;
+                rival.y = data.y;
+                rival.angle = data.angle;
+            });
+        }
+
+        // Captura do Teclado
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
+
+        function initGame() {
+            document.getElementById('room-role').innerText = isHost ? "ROLE: HOST" : "ROLE: CLIENTE";
+            gameLoop();
+        }
+
+        // Loop principal do Jogo
+        function gameLoop() {
+            if (!gameStarted) return;
+
+            updatePhysics();
+            sendData();
+            drawGraphics();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updatePhysics() {
+            // Controles do jogador local
+            if (keys['w'] || keys['ArrowUp']) player.speed = Math.min(player.speed + 0.1, 4);
+            else if (keys['s'] || keys['ArrowDown']) player.speed = Math.max(player.speed - 0.1, -2);
+            else player.speed *= 0.95;
+
+            if (keys['a'] || keys['ArrowLeft']) player.angle -= 0.04;
+            if (keys['d'] || keys['ArrowRight']) player.angle += 0.04;
+
+            // Movimento baseado na direção
+            player.x += Math.sin(player.angle) * player.speed;
+            player.y -= Math.cos(player.angle) * player.speed;
+        }
+
+        function sendData() {
+            // Envia sua posição para o outro jogador na sala
+            if (conn && conn.open) {
+                conn.send({
+                    x: player.x,
+                    y: player.y,
+                    angle: player.angle
+                });
+            }
+        }
+
+        // Efeito Gráfico de Perspectiva SNES (Pseudo-3D)
+        function drawGraphics() {
+            // Limpa a tela (Céu azul do Mario Kart)
+            ctx.fillStyle = '#64b0ff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const horizon = 100; // Linha do horizonte
+
+            // Renderiza o chão linha por linha mudando a escala para dar efeito de profundidade (Mode 7 Fake)
+            for (let screenY = horizon; screenY < canvas.height; screenY++) {
+                // Fator de perspectiva (linhas mais distantes são menores)
+                const distance = (screenY - horizon) / (canvas.height - horizon);
+                const perspectiveScale = 1 / distance;
+
+                // Alterna cores para criar o efeito "zebrado" das pistas antigas
+                const isAlt = Math.floor((player.y + perspectiveScale * 20) % 40) < 20;
+                ctx.fillStyle = isAlt ? '#10aa10' : '#008800'; // Grama
+                ctx.fillRect(0, screenY, canvas.width, 1);
+
+                // Desenha a Estrada Centralizada
+                const roadWidth = 160 * distance;
+                const roadX = (canvas.width / 2) - (roadWidth / 2) - (player.x * distance);
+                
+                ctx.fillStyle = isAlt ? '#444' : '#555'; // Asfalto
+                ctx.fillRect(roadX, screenY, roadWidth, 1);
+
+                // Bordas da pista (Linha vermelha e branca)
+                ctx.fillStyle = isAlt ? '#fff' : '#f00';
+                ctx.fillRect(roadX - (10 * distance), screenY, 10 * distance, 1);
+                ctx.fillRect(roadX + roadWidth, screenY, 10 * distance, 1);
+            }
+
+            // Renderiza os Karts na tela baseados na distância relativa
+            drawSprite(rival, player);
+            drawSprite(player, player); // Desenha a si mesmo na tela sempre à frente
+
+            // Atualiza Ranking Simples por Posição Y
+            const leaderboard = document.getElementById('rank-board');
+            if (player.y < rival.y) {
+                leaderboard.innerHTML = `1° - Você<br>2° - Rival`;
+            } else {
+                leaderboard.innerHTML = `1° - Rival<br>2° - Você`;
+            }
+        }
+
+        // Renderiza e escala os karts dependendo da posição na pista
+        function drawSprite(obj, pov) {
+            const relX = obj.x - pov.x;
+            const relY = pov.y - obj.y; // Inverte eixo Y na tela
+
+            if (relY <= 0) return; // Se estiver atrás da câmera, não desenha
+
+            const screenScale = 150 / relY;
+            const screenX = (canvas.width / 2) + (relX * screenScale) - (8 * screenScale);
+            const screenY = 100 + (relY * 2) - (12 * screenScale);
+
+            if(screenX < -50 || screenX > canvas.width + 50) return;
+
+            ctx.save();
+            ctx.translate(screenX, screenY);
+            ctx.scale(screenScale, screenScale);
+
+            // Desenha o corpo do Kart (Pixels Retrô)
+            ctx.fillStyle = obj.color;
+            ctx.fillRect(2, 4, 12, 8);
+            
+            // Rodas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 8, 3, 4);
+            ctx.fillRect(13, 8, 3, 4);
+            
+            // Capacete
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(8, 3, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+    </script>
+</body>
+</html>
