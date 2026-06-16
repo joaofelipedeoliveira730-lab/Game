@@ -3,1128 +3,716 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bomvelhinho Kart 3D - Ultimate Edition</title>
+    <title>BOMVELHOGAMES - Retro Kart Arcade</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
-        
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #03030c; font-family: 'Rajdhani', sans-serif; color: #fff; user-select: none; }
-        .font-hud { font-family: 'Orbitron', sans-serif; }
-        
-        /* Fundo Animado do Menu */
-        .animated-bg {
-            background: linear-gradient(125deg, #050515, #0b0b26, #150525, #020208);
-            background-size: 400% 400%;
-            animation: gradientMove 12s ease infinite;
-        }
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Neon FX */
-        .neon-border-blue { box-shadow: 0 0 15px rgba(0, 168, 255, 0.4), inset 0 0 15px rgba(0, 168, 255, 0.2); border: 2px solid #00a8ff; }
-        .neon-border-purple { box-shadow: 0 0 15px rgba(157, 0, 255, 0.4), inset 0 0 15px rgba(157, 0, 255, 0.2); border: 2px solid #9d00ff; }
-        .neon-text { text-shadow: 0 0 10px rgba(0, 255, 200, 0.6); }
-
-        .touch-btn { background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .touch-btn:active { background: #00a8ff; transform: scale(0.9); }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        body, html { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; user-select: none; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #000; }
+        canvas { display: block; width: 100%; height: 100%; }
+        .pixelated { image-rendering: pixelated; }
+        /* Ocultar barra de rolagem e toques longos no mobile */
+        * { -webkit-tap-highlight-color: transparent; outline: none; }
     </style>
 </head>
-<body class="w-full h-full select-none">
+<body class="text-white select-none">
 
-    <div id="scr-intro" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black transition-opacity duration-1000">
-        <div class="text-center animate-bounce">
-            <h1 class="font-hud text-5xl md:text-7xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
-                BOMVELHINHO
-            </h1>
-            <p class="font-hud text-xl md:text-2xl text-white tracking-widest mt-2 font-bold uppercase opacity-80">GAMES STUDIO</p>
-        </div>
-        <div class="mt-12 w-48 h-1 bg-zinc-900 rounded-full overflow-hidden">
-            <div class="h-full bg-cyan-400 w-full animate-[ping_1.5s_infinite]"></div>
-        </div>
-    </div>
-
-    <div id="scr-auth" class="absolute inset-0 z-40 flex items-center justify-center animated-bg hidden">
-        <div class="bg-black/80 p-8 rounded-3xl neon-border-blue w-full max-w-md backdrop-blur-md transition-all">
-            <h2 class="font-hud text-3xl font-black text-center mb-2 tracking-tight text-cyan-400">CONECTAR AO GRID</h2>
-            <p class="text-center text-zinc-400 text-sm mb-6 uppercase tracking-wider">Crie ou acesse seu perfil de piloto</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs uppercase tracking-widest text-zinc-400 font-bold mb-1">Apelido do Piloto</label>
-                    <input id="auth-user" type="text" placeholder="Ex: SennaPro" class="w-full bg-zinc-900/90 border border-zinc-700 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-cyan-400">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase tracking-widest text-zinc-400 font-bold mb-1">Senha de Acesso</label>
-                    <input id="auth-pass" type="password" placeholder="******" class="w-full bg-zinc-900/90 border border-zinc-700 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-cyan-400">
-                </div>
-                <button id="btn-auth-confirm" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 py-4 rounded-xl font-hud font-bold text-lg tracking-wider shadow-lg transform active:scale-95 transition">
-                    ENTRAR NO LOBBY MUNDIAL
-                </button>
+    <div id="ui-container" class="absolute inset-0 z-10 pointer-events-none">
+        
+        <div id="screen-intro" class="absolute inset-0 bg-black flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-1000 z-50">
+            <div class="text-center animate-bounce">
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600 drop-shadow-lg">
+                    BOMVELHOGAMES
+                </h1>
+                <p class="text-sm md:text-xl tracking-widest text-gray-400 mt-4 uppercase">Apresenta um novo clássico</p>
             </div>
-            <p id="auth-error" class="text-red-500 text-center text-sm font-bold mt-4 hidden"></p>
+            <div class="absolute bottom-10 text-xs text-gray-600 animate-pulse">Carregando motores gráficos...</div>
         </div>
-    </div>
 
-    <div id="scr-menu" class="absolute inset-0 z-30 flex items-center justify-center animated-bg hidden">
-        <div class="w-full max-w-4xl px-4 flex flex-col md:flex-row gap-8 items-center">
-            
-            <div class="w-full md:w-1/3 bg-black/70 p-6 rounded-3xl border border-zinc-800 text-center backdrop-blur-md">
-                <div class="w-20 h-20 bg-gradient-to-tr from-cyan-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center font-hud text-3xl font-black text-white shadow-lg">K</div>
-                <h3 id="menu-profile-name" class="font-hud text-2xl font-bold mt-3 text-white">Piloto</h3>
-                <span class="inline-block bg-cyan-500/10 text-cyan-400 text-xs px-3 py-1 rounded-full border border-cyan-500/20 uppercase font-bold mt-1 tracking-wider">Status: Online</span>
-                <div class="grid grid-cols-2 gap-2 mt-6 pt-6 border-t border-zinc-800 text-left">
-                    <div><p class="text-xs text-zinc-500 uppercase font-bold">Vitórias</p><p class="text-xl font-hud font-black text-yellow-400" id="stat-wins">0</p></div>
-                    <div><p class="text-xs text-zinc-500 uppercase font-bold">Pontos GP</p><p class="text-xl font-hud font-black text-purple-400" id="stat-points">0 PTS</p></div>
-                </div>
-                <button id="btn-logout" class="w-full bg-zinc-900 hover:bg-red-950/40 border border-zinc-800 hover:border-red-500/30 text-zinc-400 hover:text-red-400 py-2 rounded-xl text-sm font-bold mt-6 transition">DESCONECTAR</button>
-            </div>
-
-            <div class="w-full md:w-2/3 space-y-4">
-                <div class="text-center md:text-left mb-6">
-                    <h1 class="font-hud text-5xl font-black tracking-tight leading-none text-white">KART ARENA <span class="text-cyan-400 font-light">3D</span></h1>
-                    <p class="text-zinc-400 mt-2">Escolha seu modo de corrida, domine as curvas e use os itens com estratégia.</p>
-                </div>
-
-                <button id="btn-menu-solo" class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 p-5 rounded-2xl flex items-center justify-between shadow-xl hover:scale-[1.01] active:scale-95 transition text-left border border-cyan-400/20">
+        <div id="screen-auth" class="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-emerald-950 flex items-center justify-center pointer-events-auto hidden z-40">
+            <div class="bg-slate-900/80 p-8 rounded-2xl border border-white/10 w-full max-w-md backdrop-blur-md shadow-2xl">
+                <h2 class="text-3xl font-black text-center mb-6 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">ENTRAR NO CLUBE</h2>
+                <div class="space-y-4">
                     <div>
-                        <h2 class="font-hud text-2xl font-black tracking-tight">MODO SOLO REALEJO</h2>
-                        <p class="text-sm text-white/80 font-medium">Treine e compita contra 5 bots inteligentes no grid.</p>
+                        <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Apelido do Piloto</label>
+                        <input id="auth-username" type="text" max="12" placeholder="Ex: Player1" class="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:border-cyan-500 transition">
                     </div>
-                    <span class="text-3xl">🏁</span>
-                </button>
+                    <button id="btn-login" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-bold p-3 rounded-lg shadow-lg transform active:scale-95 transition">
+                        Entrar e Salvar na Nuvem
+                    </button>
+                    <div class="text-center text-xs text-gray-500">Ao entrar, sua conta local será criada e sincronizada automaticamente.</div>
+                </div>
+            </div>
+        </div>
 
-                <button id="btn-menu-multi" class="w-full bg-gradient-to-r from-purple-700 to-fuchsia-600 p-5 rounded-2xl flex items-center justify-between shadow-xl hover:scale-[1.01] active:scale-95 transition text-left border border-fuchsia-400/20">
+        <div id="screen-menu" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col justify-between p-6 pointer-events-auto hidden z-30">
+            <div class="flex justify-between items-center bg-slate-900/80 p-4 rounded-xl border border-white/5">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-yellow-400 to-red-500 flex items-center justify-center font-black text-xl text-slate-950" id="menu-avatar">P1</div>
                     <div>
-                        <h2 class="font-hud text-2xl font-black tracking-tight">MULTIPLAYER ONLINE</h2>
-                        <p class="text-sm text-white/80 font-medium">Crie salas customizadas ou junte-se aos amigos na rede.</p>
+                        <div class="font-bold text-lg" id="menu-username">Piloto</div>
+                        <div class="text-xs text-cyan-400">Nível <span id="menu-level">1</span> (<span id="menu-xp">0</span> XP)</div>
                     </div>
-                    <span class="text-3xl">🌐</span>
+                </div>
+                <div class="flex space-x-6">
+                    <div class="text-right"><span class="text-xs text-gray-400 block">Moedas</span><span class="font-bold text-yellow-400 text-xl" id="menu-coins">🪙 0</span></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full my-auto">
+                <button id="btn-mode-solo" class="h-40 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl border border-blue-400/30 p-6 flex flex-col justify-between items-start group hover:scale-105 transition transform shadow-xl">
+                    <span class="bg-blue-500/30 text-blue-200 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Singleplayer</span>
+                    <div class="text-left">
+                        <h3 class="text-2xl font-black mb-1">Modo Solo VS Bots</h3>
+                        <p class="text-xs text-blue-200/80">Treine suas habilidades, vença corridas e ganhe XP offline.</p>
+                    </div>
+                </button>
+                <button id="btn-mode-multi" class="h-40 bg-gradient-to-br from-purple-600 to-pink-800 rounded-2xl border border-purple-400/30 p-6 flex flex-col justify-between items-start group hover:scale-105 transition transform shadow-xl">
+                    <span class="bg-purple-500/30 text-purple-200 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Multiplayer</span>
+                    <div class="text-left">
+                        <h3 class="text-2xl font-black mb-1">Salas Online</h3>
+                        <p class="text-xs text-purple-200/80">Crie ou entre em salas privadas usando chaves de 4 dígitos.</p>
+                    </div>
                 </button>
             </div>
+
+            <div class="flex justify-center space-x-4 max-w-md mx-auto w-full">
+                <button id="btn-open-rank" class="flex-1 bg-slate-900 border border-white/10 p-3 rounded-xl text-sm font-bold hover:bg-slate-800 transition text-center">🏆 Ranking</button>
+                <button id="btn-open-achieve" class="flex-1 bg-slate-900 border border-white/10 p-3 rounded-xl text-sm font-bold hover:bg-slate-800 transition text-center">🎖️ Conquistas</button>
+            </div>
         </div>
-    </div>
 
-    <div id="scr-room-manage" class="absolute inset-0 z-30 flex items-center justify-center animated-bg hidden">
-        <div class="w-full max-w-2xl px-4">
-            <div class="bg-black/80 p-8 rounded-3xl neon-border-purple backdrop-blur-md">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="font-hud text-3xl font-black text-fuchsia-400">SALAS MULTIPLAYER</h2>
-                    <button class="btn-back bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-xl text-sm font-bold transition">← VOLTAR</button>
+        <div id="screen-lobby" class="absolute inset-0 bg-slate-950 flex flex-col p-6 pointer-events-auto hidden z-30">
+            <div class="flex justify-between items-center mb-6">
+                <button id="btn-leave-lobby" class="bg-slate-800 px-4 py-2 rounded-lg text-sm font-bold border border-white/10 hover:bg-slate-700">← Sair</button>
+                <div class="text-center">
+                    <div class="text-xs text-gray-400 uppercase tracking-widest">Código da Sala</div>
+                    <div class="text-3xl font-black text-purple-400 tracking-wider" id="lobby-code-display">A1B2</div>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4 border-b md:border-b-0 md:border-r border-zinc-800 pb-6 md:pb-0 md:pr-6">
-                        <h3 class="text-sm uppercase tracking-wider text-zinc-400 font-bold mb-2">Configurar Nova Corrida</h3>
-                        
-                        <div>
-                            <label class="block text-xs uppercase text-zinc-400 font-bold mb-1">Circuito / Mapa</label>
-                            <select id="cfg-map" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none">
-                                <option value="0">Circuito do Deserto Cinder</option>
-                                <option value="1">Pista Infernal do Vulcão</option>
-                                <option value="2">Estrada Cósmica Rainbow</option>
-                            </select>
+                <button id="btn-start-match" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 rounded-lg text-sm tracking-wide shadow-lg hidden">COMEÇAR</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0">
+                <div class="md:col-span-2 bg-slate-900/50 rounded-2xl border border-white/5 p-4 flex flex-col">
+                    <h3 class="font-bold text-gray-400 text-xs uppercase mb-3">Pilotos na Sala (<span id="lobby-ready-count">1</span>/6)</h3>
+                    <div id="lobby-players-list" class="space-y-2 flex-1 overflow-y-auto">
                         </div>
-
-                        <div>
-                            <label class="block text-xs uppercase text-zinc-400 font-bold mb-1">Dificuldade dos Bots</label>
-                            <select id="cfg-diff" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none">
-                                <option value="easy">50cc - Casual</option>
-                                <option value="medium" selected>100cc - Desafiador</option>
-                                <option value="hard">150cc - Extremo</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs uppercase text-zinc-400 font-bold mb-1">Chat de Texto Disponível?</label>
-                            <select id="cfg-chat" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none">
-                                <option value="yes">Sim, Ativar Chat</option>
-                                <option value="no">Não, Desativar</option>
-                            </select>
-                        </div>
-
-                        <button id="btn-room-create" class="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-hud font-bold py-3 rounded-xl transition">
-                            CRIAR SALA CUSTOMIZADA
-                        </button>
-                    </div>
-
-                    <div class="flex flex-col justify-center items-center space-y-4">
-                        <h3 class="text-sm uppercase tracking-wider text-zinc-400 font-bold text-center">Já possui um convite?</h3>
-                        <p class="text-xs text-zinc-500 text-center px-4">Insira o código alfanumérico da sala criada pelo seu amigo para sincronizar instantaneamente no grid.</p>
-                        <input id="input-room-code" type="text" placeholder="CÓDIGO DE 4 DÍGITOS" maxlength="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-center text-xl font-hud font-black tracking-widest text-yellow-400 focus:outline-none uppercase focus:border-yellow-400">
-                        <button id="btn-room-join" class="w-full bg-zinc-800 hover:bg-yellow-600 hover:text-black text-white font-hud font-bold py-3 rounded-xl transition">
-                            CONECTAR À SALA
-                        </button>
+                </div>
+                <div class="bg-slate-900/50 rounded-2xl border border-white/5 p-4 flex flex-col h-full">
+                    <h3 class="font-bold text-gray-400 text-xs uppercase mb-3">Chat da Sala</h3>
+                    <div id="lobby-chat-messages" class="flex-1 overflow-y-auto text-xs space-y-2 mb-3 bg-black/30 p-2 rounded-lg"></div>
+                    <div class="flex space-x-2">
+                        <input id="lobby-chat-input" type="text" placeholder="Digitar mensagem..." class="flex-1 bg-slate-800 text-xs rounded-lg p-2 border border-white/10 text-white">
+                        <button id="btn-send-chat" class="bg-purple-600 px-3 rounded-lg text-xs font-bold">Enviar</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="scr-lobby" class="absolute inset-0 z-30 flex flex-col md:flex-row bg-zinc-950 hidden">
-        <div class="flex-1 p-6 flex flex-col h-1/2 md:h-full border-b md:border-b-0 md:border-r border-zinc-900 overflow-y-auto">
-            <div class="flex justify-between items-center mb-6 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-                <div>
-                    <p class="text-xs uppercase text-zinc-500 font-bold">Identificação da Sala</p>
-                    <span id="lobby-code-display" class="font-hud text-2xl font-black text-yellow-400 tracking-widest">LOCAL</span>
+        <div id="screen-selector" class="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col p-6 pointer-events-auto hidden z-30">
+            <h2 class="text-2xl font-black text-center mb-6 uppercase tracking-wider text-cyan-400">Prepare sua Corrida</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 max-w-5xl mx-auto w-full min-h-0 overflow-y-auto">
+                <div class="bg-slate-900/60 p-4 rounded-2xl border border-white/10 flex flex-col">
+                    <h3 class="font-bold text-sm text-gray-400 uppercase mb-4">1. Escolha seu Piloto</h3>
+                    <div class="grid grid-cols-2 gap-3 flex-1" id="character-grid">
+                        </div>
                 </div>
-                <button class="btn-back bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-sm font-bold transition">SAIR DO LOBBY</button>
-            </div>
-
-            <h3 class="font-hud text-lg font-bold text-zinc-300 mb-3">ESCOLHA SEU VEÍCULO 3D</h3>
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <button class="btn-char-card p-3 bg-zinc-900 border-2 border-cyan-500 rounded-2xl transition text-center" data-char="0">
-                    <div class="w-10 h-10 rounded-xl bg-red-500 mx-auto mb-2 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
-                    <div class="font-bold text-sm">FAÍSCA</div>
-                    <div class="text-[10px] text-zinc-500 uppercase mt-1">Velocidade Máxima</div>
-                </button>
-                <button class="btn-char-card p-3 bg-zinc-900 border-2 border-transparent opacity-60 rounded-2xl transition text-center" data-char="1">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500 mx-auto mb-2 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                    <div class="font-bold text-sm">BLINDADO</div>
-                    <div class="text-[10px] text-zinc-500 uppercase mt-1">Grip / Offroad</div>
-                </button>
-                <button class="btn-char-card p-3 bg-zinc-900 border-2 border-transparent opacity-60 rounded-2xl transition text-center" data-char="2">
-                    <div class="w-10 h-10 rounded-xl bg-purple-500 mx-auto mb-2 shadow-[0_0_10px_rgba(147,51,234,0.5)]"></div>
-                    <div class="font-bold text-sm">FANTASMA</div>
-                    <div class="text-[10px] text-zinc-500 uppercase mt-1">Curvas Ágeis</div>
-                </button>
-            </div>
-
-            <div class="flex-1 bg-black/50 border border-zinc-900 rounded-2xl p-4 flex flex-col mb-4">
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="text-xs uppercase text-zinc-400 font-bold font-hud tracking-wider">Grid de Largada Oficial (6 Vagas)</h4>
-                    <span class="text-xs text-zinc-500 font-bold">Vagas Restantes completadas por Bots</span>
+                <div class="bg-slate-900/60 p-4 rounded-2xl border border-white/10 flex flex-col">
+                    <h3 class="font-bold text-sm text-gray-400 uppercase mb-4">2. Escolha o Circuito</h3>
+                    <div class="space-y-3 flex-1" id="track-grid">
+                        </div>
                 </div>
-                <ul id="lobby-racers-list" class="space-y-2 flex-1 overflow-y-auto pr-1 text-sm">
-                    </ul>
             </div>
 
-            <button id="btn-lobby-start" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 py-4 rounded-xl font-hud font-black text-xl tracking-wide shadow-lg active:scale-95 transition">
-                CONFIRMAR E LARGAR 3D
+            <button id="btn-confirm-selection" class="mt-6 max-w-md mx-auto w-full bg-gradient-to-r from-emerald-500 to-teal-600 font-black p-4 rounded-xl shadow-xl transform active:scale-95 transition tracking-widest text-center">
+                CONFIRMAR E PILOTAR!
             </button>
         </div>
 
-        <div id="lobby-chat-panel" class="w-full md:w-80 bg-zinc-900/60 p-6 flex flex-col h-1/2 md:h-full border-t md:border-t-0 md:border-l border-zinc-900">
-            <h4 class="font-hud text-xs uppercase tracking-widest text-zinc-400 mb-3 font-bold">Chat Rádio do Box</h4>
-            <div id="lobby-chat-messages" class="flex-1 bg-black/40 rounded-xl p-3 border border-zinc-950 overflow-y-auto space-y-2 text-xs font-sans">
+        <div id="screen-hud" class="absolute inset-0 flex flex-col justify-between p-4 hidden z-20">
+            <div class="flex justify-between items-start">
+                <div class="flex space-x-4">
+                    <div class="bg-black/70 border border-white/20 px-4 py-2 rounded-xl text-center backdrop-blur-sm">
+                        <span class="text-xs text-gray-400 block uppercase font-bold">Posição</span>
+                        <span class="text-3xl font-black text-yellow-400" id="hud-position">1º</span><span class="text-sm text-gray-400">/6</span>
+                    </div>
+                    <div class="bg-black/70 border border-white/20 px-4 py-2 rounded-xl text-center backdrop-blur-sm">
+                        <span class="text-xs text-gray-400 block uppercase font-bold">Volta</span>
+                        <span class="text-2xl font-black text-white" id="hud-lap">1/3</span>
+                    </div>
                 </div>
-            <form id="lobby-chat-form" class="flex gap-2 mt-3">
-                <input id="lobby-chat-input" type="text" autocomplete="off" placeholder="Mensagem para a sala..." class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-fuchsia-500">
-                <button type="submit" class="bg-fuchsia-600 hover:bg-fuchsia-500 px-3 py-2 rounded-xl text-xs font-bold transition">ENVIAR</button>
-            </form>
+                <div class="w-16 h-16 bg-black/80 border-2 border-yellow-400 rounded-2xl flex items-center justify-center text-3xl shadow-2xl backdrop-blur-sm relative animate-pulse" id="hud-item-box">
+                    ❓
+                </div>
+                <div class="text-right space-y-1">
+                    <div class="bg-black/70 border border-white/20 px-4 py-2 rounded-xl backdrop-blur-sm">
+                        <span class="text-xs text-gray-400 block font-bold uppercase">Velocidade</span>
+                        <span class="text-2xl font-black text-cyan-400" id="hud-speed">0</span> <span class="text-xs text-cyan-500">km/h</span>
+                    </div>
+                    <div class="bg-black/70 border border-white/20 px-3 py-1 rounded-lg inline-block backdrop-blur-sm">
+                        <span class="text-yellow-400 font-bold text-sm">🪙 <span id="hud-coins">0</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mobile-controls" class="flex justify-between items-end p-2 md:hidden pointer-events-auto">
+                <div class="flex space-x-3">
+                    <button id="ctrl-left" class="w-16 h-16 bg-slate-800/80 border border-white/20 rounded-full flex items-center justify-center text-2xl font-bold active:bg-cyan-500 transition shadow-lg">◀</button>
+                    <button id="ctrl-right" class="w-16 h-16 bg-slate-800/80 border border-white/20 rounded-full flex items-center justify-center text-2xl font-bold active:bg-cyan-500 transition shadow-lg">▶</button>
+                </div>
+                <div class="flex flex-col space-y-3 items-end">
+                    <button id="ctrl-item" class="w-14 h-14 bg-yellow-500/90 text-slate-950 font-black rounded-full flex items-center justify-center text-xl shadow-lg active:scale-90 transition">ITEM</button>
+                    <div class="flex space-x-3">
+                        <button id="ctrl-drift" class="w-16 h-16 bg-purple-600/80 border border-white/20 rounded-full flex items-center justify-center text-xs font-black active:bg-purple-500 shadow-lg">DRIFT</button>
+                        <button id="ctrl-gas" class="w-20 h-20 bg-emerald-500/90 text-slate-950 font-black rounded-full flex items-center justify-center text-lg shadow-xl active:bg-emerald-400">CORRER</button>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div id="screen-results" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 pointer-events-auto hidden z-40">
+            <div class="max-w-md w-full bg-slate-900 border border-white/10 rounded-2xl p-6 text-center shadow-2xl">
+                <h2 class="text-4xl font-black mb-2 tracking-wide" id="results-title">VITÓRIA!</h2>
+                <p class="text-xs text-gray-400 mb-6" id="results-subtitle">Você completou o circuito com maestria.</p>
+                
+                <div class="bg-black/40 p-4 rounded-xl space-y-3 text-left mb-6">
+                    <div class="flex justify-between text-sm"><span class="text-gray-400">Sua Posição:</span><span class="font-bold text-yellow-400" id="res-pos">1º Lugar</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-gray-400">Moedas Coletadas:</span><span class="font-bold text-amber-400" id="res-coins">+0 Moedas</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-gray-400">XP Adquirido:</span><span class="font-bold text-cyan-400" id="res-xp">+0 XP</span></div>
+                </div>
+
+                <button id="btn-results-exit" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 font-bold p-3 rounded-xl shadow-lg">Voltar ao Menu</button>
+            </div>
+        </div>
+
     </div>
 
-    <div id="scr-game" class="absolute inset-0 z-10 hidden">
-        <div id="game-render-viewport" class="w-full h-full absolute inset-0 z-1"></div>
-
-        <div class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6">
-            <div class="flex justify-between items-start w-full">
-                <div class="space-y-2">
-                    <div class="bg-black/80 border border-zinc-800 px-4 py-2 rounded-xl text-white font-hud text-sm flex items-center gap-3 shadow-lg">
-                        <span class="text-zinc-500 font-bold">VOLTA</span>
-                        <span id="hud-lap" class="text-cyan-400 font-black text-lg">1 / 3</span>
-                    </div>
-                    
-                    <div class="flex items-center gap-3">
-                        <div id="hud-item-box" class="w-16 h-16 bg-black/90 border-2 border-zinc-700 rounded-2xl flex items-center justify-center text-3xl shadow-2xl transition-all duration-300">
-                            ❓
-                        </div>
-                        <div class="bg-black/60 px-2 py-1 rounded text-[10px] text-zinc-400 font-sans uppercase tracking-widest">ESPAÇO / BOTÃO MÓVEL PARA LANÇAR</div>
-                    </div>
-                </div>
-
-                <div class="w-24 h-24 md:w-32 md:h-32 bg-black/80 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
-                    <canvas id="hud-minimap" width="128" height="128" class="w-full h-full"></canvas>
-                </div>
-            </div>
-
-            <div id="hud-status-alert" class="self-center bg-red-600/90 text-white font-hud font-black px-6 py-3 rounded-2xl border-2 border-white shadow-2xl text-center hidden uppercase tracking-widest animate-pulse">
-                💥 DERAPOU! PERDEU O CONTROLE!
-            </div>
-
-            <div id="hud-countdown" class="absolute inset-0 flex items-center justify-center hidden">
-                <span id="hud-countdown-text" class="font-hud text-8xl md:text-9xl font-black text-yellow-400 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] animate-scale">3</span>
-            </div>
-
-            <div id="hud-touch-panel" class="w-full flex justify-between items-end pointer-events-none md:hidden">
-                <div class="flex gap-2 pointer-events-auto">
-                    <div id="touch-left" class="touch-btn w-16 h-16">
-                        <svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
-                    </div>
-                    <div id="touch-right" class="touch-btn w-16 h-16">
-                        <svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4 pointer-events-auto">
-                    <div id="touch-item" class="touch-btn w-14 h-14 bg-yellow-600/40 border-yellow-500 text-xl">🎁</div>
-                    <div id="touch-brake" class="touch-btn w-14 h-14 bg-red-600/40 border-red-500 text-xs font-bold">RÉ</div>
-                    <div id="touch-gas" class="touch-btn w-20 h-20 bg-emerald-600/50 border-emerald-400 font-hud font-bold text-sm tracking-tighter">ACELERA</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="scr-results" class="absolute inset-0 z-40 bg-black/95 flex flex-col items-center justify-center backdrop-blur-md hidden p-4">
-            <div class="w-full max-w-md bg-zinc-900 border-2 border-yellow-500 rounded-3xl p-6 shadow-2xl flex flex-col">
-                <h2 class="font-hud text-3xl font-black text-center text-yellow-400 tracking-tight mb-1">FIM DA PROVA</h2>
-                <p class="text-center text-zinc-500 text-xs uppercase tracking-widest mb-6 font-bold">Grid Final de Classificação</p>
-                
-                <div id="results-leaderboard-container" class="space-y-2 flex-1 overflow-y-auto mb-6 pr-1">
-                    </div>
-
-                <button id="btn-results-finish" class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 py-4 rounded-xl font-hud font-bold tracking-wide transition active:scale-95 shadow-lg text-center">
-                    VOLTAR AO MENU PRINCIPAL
-                </button>
-            </div>
-        </div>
-    </div>
+    <div id="canvas-container" class="w-full h-full absolute inset-0 z-0"></div>
 
     <script>
-        // --- GERENCIADOR DE ESTADOS GLOBAIS ---
-        let currentScreen = document.getElementById('scr-intro');
-        let sessionUser = null;
-        let activeRoom = { isMulti: false, code: 'LOCAL', mapId: 0, diff: 'medium', allowChat: true };
-        let gameActive = false, isCountdownActive = false, raceStartTimestamp = 0;
-        
-        const CHARACTERS = [
-            { id: 0, name: "Faísca", color: "#ef4444", colorHex: 0xef4444, maxSpeed: 19, accel: 0.28, turnSpeed: 0.05, grip: 0.92 },
-            { id: 1, name: "Blindado", color: "#10b981", colorHex: 0x10b981, maxSpeed: 15, accel: 0.42, turnSpeed: 0.06, grip: 0.98 },
-            { id: 2, name: "Fantasma", color: "#a855f7", colorHex: 0xa855f7, maxSpeed: 17, accel: 0.33, turnSpeed: 0.08, grip: 0.94 }
-        ];
+        /**
+         * CONFIGURAÇÃO E DADOS GERAIS DO JOGO
+         */
+        const GAME_DATA = {
+            characters: [
+                { id: 'speedy', name: 'Zorvath', stat: 'Velocidade Max', desc: 'Invasor espacial veloz', icon: '👽', color: 0x38bdf8, speed: 1.3, accel: 0.04 },
+                { id: 'tank', name: 'Brokk', stat: 'Resistência / Peso', desc: 'Guerreiro de puro minério', icon: '🤖', color: 0x64748b, speed: 1.1, accel: 0.03 },
+                { id: 'accel', name: 'Kira', stat: 'Aceleração Súbita', desc: 'Ninja urbana ágil', icon: '🦊', color: 0xf43f5e, speed: 1.15, accel: 0.06 },
+                { id: 'tactical', name: 'Dr. Chronos', stat: 'Duração de Item', desc: 'Cientista temporal excêntrico', icon: '🧠', color: 0x10b981, speed: 1.2, accel: 0.045 }
+            ],
+            tracks: [
+                { id: 'city', name: 'Metrópole Neon', env: 'Cidade', difficulty: 'Fácil', bg: 'from-blue-900 to-indigo-990', color: 0x0f172a },
+                { id: 'snow', name: 'Pico Congelado', env: 'Neve', difficulty: 'Média', bg: 'from-sky-300 to-blue-600', color: 0xe2e8f0 },
+                { id: 'volcano', name: 'Caldera de Fogo', env: 'Vulcão', difficulty: 'Difícil', bg: 'from-orange-600 to-red-950', color: 0x450a0a }
+            ],
+            items: [
+                { name: 'Turbo', icon: '🚀' },
+                { name: 'Escudo', icon: '🛡️' },
+                { name: 'Míssil', icon: '🎯' },
+                { name: 'Bola de Fogo', icon: '🔥' },
+                { name: 'Raio', icon: '⚡' },
+                { name: 'Moedas', icon: '🪙' }
+            ]
+        };
 
-        const MAPS = [
-            { name: "Deserto Cinder", theme: 'desert', bgColor: 0xdfbc8a, width: 10, height: 10, start: {x:4, z:8, rot:0}, grid: [
-                [2,2,2,2,2,2,2,2,2,2], [2,1,1,1,1,1,1,7,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,7,0,2,2,2,2,0,7,2],
-                [2,1,0,2,2,2,2,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,1,3,1,1,1,1,1,2], [2,2,2,2,2,2,2,2,2,2]
-            ]},
-            { name: "Pista do Vulcão", theme: 'volcano', bgColor: 0x1a0805, width: 10, height: 10, start: {x:2, z:8, rot:0}, grid: [
-                [2,2,2,2,2,2,2,2,2,2], [2,1,1,7,1,1,1,1,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,0,1,1,1,1,0,1,2], [2,1,0,1,2,2,1,0,7,2],
-                [2,7,0,1,2,2,1,0,1,2], [2,1,0,1,1,1,1,0,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,1,3,1,1,1,1,1,2], [2,2,2,2,2,2,2,2,2,2]
-            ]},
-            { name: "Estrada Rainbow", theme: 'space', bgColor: 0x02020a, width: 10, height: 10, start: {x:5, z:8, rot:0}, grid: [
-                [2,2,2,2,2,2,2,2,2,2], [2,1,1,1,7,1,1,1,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,1,0,2,2,2,2,0,1,2],
-                [2,1,0,2,2,2,2,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,1,1,1,3,1,7,1,2], [2,2,2,2,2,2,2,2,2,2]
-            ]}
-        ];
+        // Estado do Jogador Local (Salvo localmente por padrão, extensível para nuvem)
+        let playerProfile = {
+            username: "Piloto Local",
+            level: 1,
+            xp: 0,
+            coins: 50,
+            unlockedCharacters: ['speedy', 'tank'],
+            achievements: []
+        };
 
-        const ITEMS_POOL = ['rocket', 'banana', 'shield'];
+        // Configurações Globais da Sessão Ativa
+        let activeSession = {
+            mode: 'solo', // 'solo' ou 'multi'
+            roomCode: '',
+            selectedCharacter: GAME_DATA.characters[0],
+            selectedTrack: GAME_DATA.tracks[0],
+            isMatchActive: false
+        };
 
-        // --- CORE ENGINE VARIABLES ---
-        let scene, camera, renderer, clock;
-        let viewWidth = window.innerWidth, viewHeight = window.innerHeight;
-        let trackMeshes = [], wallMeshes = [], boxMeshes = [], projectileMeshes = [];
-        let animationFrameId = null;
+        // Inputs e Controles de Direção/Ação
+        const inputs = { forward: false, backward: false, left: false, right: false, drift: false, useItem: false };
 
-        // Entidades da Corrida (Até 6 Jogadores)
-        let localRacer = { x: 0, z: 0, angle: 0, speed: 0, lap: 1, checkpoint: 0, finished: false, time: 0, item: null, stunUntil: 0, charId: 0, activeShield: false };
-        let racersGrid = []; // Array contendo localRacer + oponentes (Bots ou emulados)
+        /**
+         * AUDIO MANAGER PROCEDURAL (Sintetizador Web Audio API para rodar totalmente offline)
+         */
+        const AudioManager = {
+            ctx: null,
+            init() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            playTone(freq, type, duration, vol=0.1) {
+                if(!this.ctx) return;
+                try {
+                    let osc = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            },
+            playIntro() {
+                this.playTone(261.63, 'sine', 0.2);
+                setTimeout(() => this.playTone(329.63, 'sine', 0.2), 150);
+                setTimeout(() => this.playTone(392.00, 'sine', 0.2), 300);
+                setTimeout(() => this.playTone(523.25, 'triangle', 0.5, 0.2), 450);
+            },
+            playItemPickup() { this.playTone(880, 'square', 0.15, 0.05); setTimeout(() => this.playTone(1760, 'square', 0.2, 0.05), 80); },
+            playDrift() { this.playTone(120 + Math.random()*50, 'sawtooth', 0.05, 0.02); },
+            playTurbo() { this.playTone(600, 'sawtooth', 0.4, 0.1); }
+        };
 
-        // Controles de Input Sincronizados
-        const inputState = { gas: 0, brake: 0, left: 0, right: 0, fire: 0 };
-        const keyMap = { w: 'gas', ArrowUp: 'gas', s: 'brake', ArrowDown: 'brake', a: 'left', ArrowLeft: 'left', d: 'right', ArrowRight: 'right', ' ': 'fire' };
-
-        function navigateTo(targetElement) {
-            currentScreen.classList.add('hidden');
-            targetElement.classList.remove('hidden');
-            currentScreen = targetElement;
-        }
-
-        // --- SISTEMA DE AUTENTICAÇÃO PERSISTENTE ---
-        function checkPersistentAuth() {
-            const saved = localStorage.getItem('bv_kart_profile');
-            if (saved) {
-                sessionUser = JSON.parse(saved);
-                document.getElementById('menu-profile-name').textContent = sessionUser.username;
-                document.getElementById('stat-wins').textContent = sessionUser.wins || 0;
-                document.getElementById('stat-points').textContent = (sessionUser.wins * 100) + " PTS";
-                navigateTo(document.getElementById('scr-menu'));
-            } else {
-                navigateTo(document.getElementById('scr-auth'));
-            }
-        }
-
-        document.getElementById('btn-auth-confirm').onclick = () => {
-            const user = document.getElementById('auth-user').value.trim();
-            const pass = document.getElementById('auth-pass').value.trim();
-            const err = document.getElementById('auth-error');
-
-            if (user.length < 3 || pass.length < 4) {
-                err.textContent = "Apelido (mínimo 3 letras) e senha (mínimo 4 caracteres) inválidos!";
-                err.classList.remove('hidden');
-                return;
-            }
-            err.classList.add('hidden');
+        /**
+         * CORE ENGINE DO SISTEMA DE CORRIDA 3D (THREE.JS)
+         */
+        const Engine3D = {
+            scene: null, camera: null, renderer: null,
+            trackMesh: null, playerKart: null, bots: [], boxes: [], coins: [],
+            clock: new THREE.Clock(),
             
-            sessionUser = { username: user, wins: 0 };
-            localStorage.setItem('bv_kart_profile', JSON.stringify(sessionUser));
-            document.getElementById('menu-profile-name').textContent = user;
-            navigateTo(document.getElementById('scr-menu'));
-        };
+            // Física Básica do Veículo do Jogador
+            physics: { speed: 0, maxSpeed: 1.2, accel: 0.04, drag: 0.96, turnSpeed: 0.04, angle: 0, x: 0, z: 0, driftBonus: 0, currentItem: null },
 
-        document.getElementById('btn-logout').onclick = () => {
-            localStorage.removeItem('bv_kart_profile');
-            document.getElementById('auth-user').value = '';
-            document.getElementById('auth-pass').value = '';
-            navigateTo(document.getElementById('scr-auth'));
-        };
-
-        // --- GERENCIAMENTO DE ROTAS / MENUS ---
-        document.getElementById('btn-menu-solo').onclick = () => {
-            activeRoom.isMulti = false;
-            activeRoom.code = 'LOCAL';
-            activeRoom.mapId = Math.floor(Math.random() * MAPS.length);
-            activeRoom.diff = 'medium';
-            activeRoom.allowChat = false;
-            setupLobbyUI();
-        };
-
-        document.getElementById('btn-menu-multi').onclick = () => {
-            navigateTo(document.getElementById('scr-room-manage'));
-        };
-
-        document.getElementById('btn-room-create').onclick = () => {
-            activeRoom.isMulti = true;
-            activeRoom.code = Math.random().toString(36).substring(2, 6).toUpperCase();
-            activeRoom.mapId = parseInt(document.getElementById('cfg-map').value);
-            activeRoom.diff = document.getElementById('cfg-diff').value;
-            activeRoom.allowChat = document.getElementById('cfg-chat').value === 'yes';
-            setupLobbyUI();
-        };
-
-        document.getElementById('btn-room-join').onclick = () => {
-            const code = document.getElementById('input-room-code').value.trim().toUpperCase();
-            if (code.length !== 4) return alert("Código precisa ter exatamente 4 dígitos!");
-            activeRoom.isMulti = true;
-            activeRoom.code = code;
-            activeRoom.mapId = Math.floor(Math.random() * MAPS.length);
-            activeRoom.diff = 'hard';
-            activeRoom.allowChat = true;
-            setupLobbyUI();
-        };
-
-        document.querySelectorAll('.btn-back').forEach(btn => {
-            btn.onclick = () => {
-                if (currentScreen === document.getElementById('scr-room-manage') || currentScreen === document.getElementById('scr-lobby')) {
-                    navigateTo(document.getElementById('scr-menu'));
-                }
-            };
-        });
-
-        // --- EVENTO SELEÇÃO DE HERO / PILOTO ---
-        document.querySelectorAll('.btn-char-card').forEach((card, index) => {
-            card.onclick = () => {
-                document.querySelectorAll('.btn-char-card').forEach(c => {
-                    c.classList.replace('border-cyan-500', 'border-transparent');
-                    c.classList.add('opacity-60');
-                });
-                card.classList.replace('border-transparent', 'border-cyan-500');
-                card.classList.remove('opacity-60');
-                localRacer.charId = index;
-                renderLobbyRacersGridList();
-            };
-        });
-
-        function setupLobbyUI() {
-            navigateTo(document.getElementById('scr-lobby'));
-            document.getElementById('lobby-code-display').textContent = activeRoom.code;
-            document.getElementById('lobby-chat-panel').style.display = activeRoom.allowChat ? 'flex' : 'none';
-            renderLobbyRacersGridList();
-            
-            if (activeRoom.allowChat) {
-                const chatBox = document.getElementById('lobby-chat-messages');
-                chatBox.innerHTML = `<div class="text-zinc-500 italic text-center">[Rádio do Box de Corrida Ativado - Sala ${activeRoom.code}]</div>`;
-            }
-        }
-
-        function renderLobbyRacersGridList() {
-            const listContainer = document.getElementById('lobby-racers-list');
-            listContainer.innerHTML = '';
-
-            // Configurando Estrutura Dinâmica com Exatamente 6 Corredores Obrigatórios
-            racersGrid = [
-                { isBot: false, name: sessionUser.username + " (Você)", charId: localRacer.charId, id: 'player_local' }
-            ];
-
-            // Nomes de pilotos simulados em tempo real na rede/bots para completar o grid de 6 vagas
-            const poolNames = ["Alpha_Bot", "Vortex3D", "CyberPiloto", "NeonRacer", "Shadow_AI", "HyperKart", "TurboX"];
-            let nameIdx = 0;
-            while(racersGrid.length < 6) {
-                racersGrid.push({
-                    isBot: true,
-                    name: (activeRoom.isMulti ? "[Rede/Bot] " : "[Bot] ") + poolNames[nameIdx++ % poolNames.length],
-                    charId: Math.floor(Math.random() * 3),
-                    id: 'bot_' + racersGrid.length
-                });
-            }
-
-            racersGrid.forEach(r => {
-                const charData = CHARACTERS[r.charId];
-                listContainer.innerHTML += `
-                    <li class="flex items-center justify-between p-3 bg-zinc-900/80 rounded-xl border border-zinc-800">
-                        <div class="flex items-center gap-3">
-                            <div class="w-4 h-4 rounded-full" style="background-color: ${charData.color}"></div>
-                            <span class="font-bold ${!r.isBot ? 'text-cyan-400' : 'text-zinc-300'}">${r.name}</span>
-                        </div>
-                        <span class="text-xs font-hud tracking-tighter uppercase px-2 py-0.5 rounded bg-zinc-950 text-zinc-500">${charData.name}</span>
-                    </li>
-                `;
-            });
-        }
-
-        // Chat do Lobby
-        document.getElementById('lobby-chat-form').onsubmit = (e) => {
-            e.preventDefault();
-            const input = document.getElementById('lobby-chat-input');
-            const txt = input.value.trim();
-            if(!txt) return;
-            const chatBox = document.getElementById('lobby-chat-messages');
-            chatBox.innerHTML += `<div><span class="text-cyan-400 font-bold">${sessionUser.username}:</span> <span class="text-zinc-200">${txt}</span></div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-            input.value = '';
-        };
-
-
-        // --- ENGINE GRÁFICO 3D (THREE.JS HIGH-END CORE) ---
-        const TILE_SIZE = 60;
-
-        function build3DEngineWorld() {
-            const mapData = MAPS[activeRoom.mapId];
-            
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(mapData.bgColor);
-            scene.fog = new THREE.FogExp2(mapData.bgColor, 0.003);
-
-            camera = new THREE.PerspectiveCamera(65, viewWidth / viewHeight, 0.1, 1500);
-            clock = new THREE.Clock();
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-            renderer.setSize(viewWidth, viewHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-            document.getElementById('game-render-viewport').appendChild(renderer.domElement);
-
-            // Iluminação Global Otimizada
-            const ambientLight = new THREE.AmbientLight(0xffffff, mapData.theme === 'space' ? 0.4 : 0.6);
-            scene.add(ambientLight);
-
-            const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            sunLight.position.set(150, 300, 100);
-            sunLight.castShadow = true;
-            sunLight.shadow.mapSize.width = 1024;
-            sunLight.shadow.mapSize.height = 1024;
-            sunLight.shadow.camera.near = 0.5;
-            sunLight.shadow.camera.far = 800;
-            const sd = 250;
-            sunLight.shadow.camera.left = -sd; sunLight.shadow.camera.right = sd;
-            sunLight.shadow.camera.top = sd; sunLight.shadow.camera.bottom = -sd;
-            scene.add(sunLight);
-
-            // Geração da Malha da Pista Base 3D
-            const roadMat = new THREE.MeshStandardMaterial({ color: mapData.theme === 'space' ? 0x221144 : 0x2d2e33, roughness: 0.5, metalness: 0.2 });
-            const finishMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }); // Linha Chegada
-            const wallMat = new THREE.MeshStandardMaterial({ color: mapData.theme === 'volcano' ? 0x3d0a00 : mapData.theme === 'desert' ? 0x9c6633 : 0x00dfff, roughness: 0.6, emissive: mapData.theme === 'space' ? 0x0055ff : 0x000000 });
-
-            trackMeshes = []; wallMeshes = []; boxMeshes = []; projectileMeshes = [];
-
-            const grid = mapData.grid;
-            for(let z=0; z<mapData.height; z++) {
-                for(let x=0; x<mapData.width; x++) {
-                    const tile = grid[z][x];
-                    const px = x * TILE_SIZE - (mapData.width * TILE_SIZE)/2 + TILE_SIZE/2;
-                    const pz = z * TILE_SIZE - (mapData.height * TILE_SIZE)/2 + TILE_SIZE/2;
-
-                    if (tile === 1 || tile === 3 || tile === 7) {
-                        const geo = new THREE.BoxGeometry(TILE_SIZE, 0.5, TILE_SIZE);
-                        const mesh = new THREE.Mesh(geo, tile === 3 ? finishMat : roadMat);
-                        mesh.position.set(px, -0.25, pz);
-                        mesh.receiveShadow = true;
-                        scene.add(mesh);
-                        trackMeshes.push(mesh);
-
-                        // Caixa de Item Flutuante 3D Procedural
-                        if(tile === 7) {
-                            const bGeo = new THREE.BoxGeometry(4, 4, 4);
-                            const bMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, transparent: true, opacity: 0.7, emissive: 0xff5500 });
-                            const box = new THREE.Mesh(bGeo, bMat);
-                            box.position.set(px, 3, pz);
-                            box.castShadow = true;
-                            scene.add(box);
-                            boxMeshes.push({ mesh: box, originY: 3, rotSpeed: 0.03 + Math.random()*0.02, active: true, respawnAt: 0 });
-                        }
-                    } else if (tile === 2) {
-                        const wGeo = new THREE.BoxGeometry(TILE_SIZE, mapData.theme === 'space' ? 2 : 12, TILE_SIZE);
-                        const mesh = new THREE.Mesh(wGeo, wallMat);
-                        mesh.position.set(px, mapData.theme === 'space' ? 1 : 6, pz);
-                        mesh.castShadow = true;
-                        mesh.receiveShadow = true;
-                        scene.add(mesh);
-                        wallMeshes.push(mesh);
-                    }
-                }
-            }
-        }
-
-        // Fábrica de Modelagem de Karts em Geometria Pura 3D Otimizada
-        function create3DKartModel(colorHex) {
-            const group = new THREE.Group();
-            
-            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.2, metalness: 0.7 });
-            const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-            const metalMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.9, roughness: 0.1 });
-
-            // Chassi Principal
-            const chassi = new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 5), bodyMat);
-            chassi.position.y = 0.5;
-            chassi.castShadow = true;
-            chassi.receiveShadow = true;
-            group.add(chassi);
-
-            // Aerofólio Traseiro
-            const wing = new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 1.2), bodyMat);
-            wing.position.set(0, 1.6, -2.2);
-            wing.castShadow = true;
-            group.add(wing);
-
-            const wingSupportL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.2), metalMat);
-            wingSupportL.position.set(-1.4, 1.0, -2.2);
-            group.add(wingSupportL);
-            const wingSupportR = wingSupportL.clone();
-            wingSupportR.position.x = 1.4;
-            group.add(wingSupportR);
-
-            // Assento do Piloto
-            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.8), blackMat);
-            seat.position.set(0, 1.1, -0.6);
-            group.add(seat);
-
-            // Rodas do Kart
-            const wheelGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.6, 12);
-            wheelGeo.rotateZ(Math.PI / 2);
-            const wOffsets = [
-                {x: -1.8, z: 1.6}, {x: 1.8, z: 1.6},
-                {x: -1.8, z: -1.6}, {x: 1.8, z: -1.6}
-            ];
-            
-            const wheelMeshes = [];
-            wOffsets.forEach(offset => {
-                const wheel = new THREE.Mesh(wheelGeo, blackMat);
-                wheel.position.set(offset.x, 0.6, offset.z);
-                wheel.castShadow = true;
-                group.add(wheel);
-                wheelMeshes.push(wheel);
-            });
-
-            scene.add(group);
-            return { rootGroup: group, wheels: wheelMeshes };
-        }
-
-        // --- SISTEMA INICIALIZADOR DA PARTIDA (CONTAGEM DE LARGADA) ---
-        document.getElementById('btn-lobby-start').onclick = () => {
-            navigateTo(document.getElementById('scr-game'));
-            build3DEngineWorld();
-
-            const mapData = MAPS[activeRoom.mapId];
-            const startX = mapData.start.x * TILE_SIZE - (mapData.width * TILE_SIZE)/2 + TILE_SIZE/2;
-            const startZ = mapData.start.z * TILE_SIZE - (mapData.height * TILE_SIZE)/2 + TILE_SIZE/2;
-
-            // Instanciar Entidades Físicas Gráficas dos Corredores do Grid Sincronizado
-            racersGrid.forEach((r, idx) => {
-                const models = create3DKartModel(CHARACTERS[r.charId].colorHex);
-                r.rootGroup = models.rootGroup;
-                r.wheels = models.wheels;
-
-                // Alinhamento em fila indiana dupla no grid de largada
-                r.x = startX + (idx % 2 === 0 ? -4 : 4);
-                r.z = startZ - (Math.floor(idx / 2) * 8);
-                r.angle = mapData.start.rot;
-                r.speed = 0;
-                r.lap = 1;
-                r.checkpoint = 0;
-                r.finished = false;
-                r.stunUntil = 0;
-                r.activeShield = false;
-
-                r.rootGroup.position.set(r.x, 0, r.z);
-                r.rootGroup.rotation.y = r.angle;
-            });
-
-            // Reseta Estado do Jogador Local Referencial
-            localRacer = racersGrid[0];
-            localRacer.item = null;
-            updateItemBoxHUD();
-            document.getElementById('hud-lap').textContent = `1 / 3`;
-
-            // Ativar Sequência Animada de Contagem Regressiva Arcade
-            isCountdownActive = true;
-            gameActive = true;
-            
-            const countBox = document.getElementById('hud-countdown');
-            const countTxt = document.getElementById('hud-countdown-text');
-            countBox.classList.remove('hidden');
-
-            let countStep = 3;
-            countTxt.textContent = countStep;
-            
-            const interval = setInterval(() => {
-                countStep--;
-                if(countStep > 0) {
-                    countTxt.textContent = countStep;
-                } else if(countStep === 0) {
-                    countTxt.textContent = "VAI!";
-                    countTxt.classList.replace('text-yellow-400', 'text-emerald-400');
-                    isCountdownActive = false;
-                    raceStartTimestamp = Date.now();
-                } else {
-                    clearInterval(interval);
-                    countBox.classList.add('hidden');
-                    countTxt.classList.replace('text-emerald-400', 'text-yellow-400');
-                }
-            }, 1000);
-
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            clock.getDelta(); // Reset clock
-            loopEngineGameplay();
-        };
-
-
-        // --- LOOP DE SIMULAÇÃO FÍSICA E RENDER (60 FPS) ---
-        function loopEngineGameplay() {
-            if (!gameActive) return;
-            animationFrameId = requestAnimationFrame(loopEngineGameplay);
-
-            const dt = clock.getDelta();
-            const now = Date.now();
-
-            // 1. Processamento da Física do Jogador Humano Local
-            if (!isCountdownActive && !localRacer.finished) {
-                if (now < localRacer.stunUntil) {
-                    localRacer.speed = 0;
-                    localRacer.rootGroup.rotation.y += 0.3; // Animação Girando Tonto
-                    document.getElementById('hud-status-alert').classList.remove('hidden');
-                } else {
-                    document.getElementById('hud-status-alert').classList.add('hidden');
-                    const spec = CHARACTERS[localRacer.charId];
-
-                    // Tratamento Aceleração / Atrito
-                    if (inputState.gas) {
-                        localRacer.speed += spec.accel;
-                        if (localRacer.speed > spec.maxSpeed) localRacer.speed = spec.maxSpeed;
-                    } else if (inputState.brake) {
-                        localRacer.speed -= spec.accel * 1.5;
-                        if (localRacer.speed < -spec.maxSpeed / 2) localRacer.speed = -spec.maxSpeed / 2;
-                    } else {
-                        localRacer.speed *= 0.95; // Fricção natural da pista
-                    }
-
-                    // Direção Dinâmica
-                    if (Math.abs(localRacer.speed) > 0.5) {
-                        const turnFactor = spec.turnSpeed * (localRacer.speed > 0 ? 1 : -1);
-                        if (inputState.left) localRacer.angle += turnFactor;
-                        if (inputState.right) localRacer.angle -= turnFactor;
-                    }
-
-                    // Avanço Vetorial e Colisão com Paredes
-                    let nx = localRacer.x + Math.sin(localRacer.angle) * localRacer.speed * 0.15;
-                    let nz = localRacer.z + Math.cos(localRacer.angle) * localRacer.speed * 0.15;
-
-                    if (checkWall3DCollision(nx, nz)) {
-                        localRacer.speed = -localRacer.speed * 0.4; // Rebote Elástico
-                    } else {
-                        localRacer.x = nx;
-                        localRacer.z = nz;
-                    }
-
-                    localRacer.rootGroup.position.set(localRacer.x, 0, localRacer.z);
-                    localRacer.rootGroup.rotation.set(0, localRacer.angle, 0);
-                    
-                    // Rotacionar Calotas das Rodas Baseado na Marcha
-                    localRacer.wheels.forEach(w => w.rotation.x += localRacer.speed * 0.05);
-
-                    checkTrackCheckpointsSystem(localRacer);
-                }
-
-                // Disparar Item Coletado
-                if (inputState.fire && localRacer.item) {
-                    executeRacerItemTrigger(localRacer);
-                    inputState.fire = 0;
-                }
-            }
-
-            // 2. Processamento da Inteligência Artificial dos 5 Bots do Grid
-            racersGrid.forEach(r => {
-                if (!r.isBot || isCountdownActive || r.finished) return;
-
-                if (now < r.stunUntil) {
-                    r.rootGroup.rotation.y += 0.2;
-                    return;
-                }
-
-                const spec = CHARACTERS[r.charId];
-                // Caminho de Inteligência Artificial baseado na matriz da pista atual
-                const mapData = MAPS[activeRoom.mapId];
-                // Nó alvo simplificado: calcular o centro geométrico aproximado da pista mais próxima
-                // Bots miram dinamicamente no fluxo ideal da pista para contornar paredes
-                let targetX = 0, targetZ = 0, bestDist = 999999;
+            init() {
+                const container = document.getElementById('canvas-container');
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(activeSession.selectedTrack.color);
                 
-                // Procurar bloco de pista válido para perseguição por nós próximos
-                for(let z=0; z<mapData.height; z++) {
-                    for(let x=0; x<mapData.width; x++) {
-                        if(mapData.grid[z][x] === 1 || mapData.grid[z][x] === 3) {
-                            const blockX = x * TILE_SIZE - (mapData.width * TILE_SIZE)/2 + TILE_SIZE/2;
-                            const blockZ = z * TILE_SIZE - (mapData.height * TILE_SIZE)/2 + TILE_SIZE/2;
-                            const d = Math.hypot(blockX - r.x, blockZ - r.z);
-                            if (d > 10 && d < bestDist) {
-                                // Ajuste de dificuldade na perseguição e IA
-                                if(activeRoom.diff === 'easy' && Math.random() > 0.4) continue;
-                                bestDist = d; targetX = blockX; targetZ = blockZ;
-                            }
-                        }
-                    }
-                }
+                // Névoa para efeito de profundidade e otimização
+                this.scene.fog = new THREE.FogExp2(activeSession.selectedTrack.color, 0.015);
 
-                // Cálculo angular do volante da IA
-                let angleToTarget = Math.atan2(targetX - r.x, targetZ - r.z);
-                let diff = angleToTarget - r.angle;
-                while(diff < -Math.PI) diff += Math.PI*2;
-                while(diff > Math.PI) diff -= Math.PI*2;
+                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.shadowMap.enabled = true;
+                container.appendChild(this.renderer.domElement);
 
-                r.angle += diff * 0.05;
+                this.buildLights();
+                this.buildTrackAndEnvironment();
+                this.spawnEntities();
+
+                window.addEventListener('resize', () => this.onWindowResize());
+                this.animate();
+            },
+
+            buildLights() {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(100, 150, 50);
+                this.scene.add(dirLight);
+            },
+
+            buildTrackAndEnvironment() {
+                // Desenhar Pista de Corrida (Formato Oval Clássico com Largura Otimizada)
+                const trackGeometry = new THREE.RingGeometry(80, 110, 64);
+                const trackMaterial = new THREE.MeshStandardMaterial({ color: 0x334155, side: THREE.DoubleSide, roughness: 0.8 });
+                this.trackMesh = new THREE.Mesh(trackGeometry, trackMaterial);
+                this.trackMesh.rotation.x = Math.PI / 2;
+                this.scene.add(this.trackMesh);
+
+                // Adicionar Linha de Chegada / Largada
+                const lineGeo = new THREE.PlaneGeometry(30, 4);
+                const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+                const finishLine = new THREE.Mesh(lineGeo, lineMat);
+                finishLine.position.set(95, 0.02, 0);
+                finishLine.rotation.x = Math.PI / 2;
+                this.scene.add(finishLine);
+
+                // Elementos decorativos do ambiente (Cenário de acordo com a pista escolhida)
+                let envColor = activeSession.selectedTrack.env === 'Vulcão' ? 0xea580c : (activeSession.selectedTrack.env === 'Neve' ? 0xffffff : 0x22c55e);
+                const decorGeo = new THREE.ConeGeometry(3, 10, 4);
+                const decorMat = new THREE.MeshStandardMaterial({ color: envColor });
                 
-                let botMaxSpeed = spec.maxSpeed * (activeRoom.diff === 'easy' ? 0.65 : activeRoom.diff === 'medium' ? 0.82 : 0.98);
-                r.speed += spec.accel * 0.8;
-                if (r.speed > botMaxSpeed) r.speed = botMaxSpeed;
-
-                r.x += Math.sin(r.angle) * r.speed * 0.15;
-                r.z += Math.cos(r.angle) * r.speed * 0.15;
-
-                r.rootGroup.position.set(r.x, 0, r.z);
-                r.rootGroup.rotation.set(0, r.angle, 0);
-                r.wheels.forEach(w => w.rotation.x += r.speed * 0.05);
-
-                checkTrackCheckpointsSystem(r);
-
-                // Chance Randômica de Bots Usarem Itens caso passem pelas caixas
-                if(Math.random() < 0.003 && !r.item) {
-                    r.item = ITEMS_POOL[Math.floor(Math.random()*ITEMS_POOL.length)];
-                    executeRacerItemTrigger(r);
+                for(let i = 0; i < 40; i++) {
+                    let mesh = new THREE.Mesh(decorGeo, decorMat);
+                    let angle = (i / 40) * Math.PI * 2;
+                    let radius = i % 2 === 0 ? 70 : 120; // Alterna entre lado interno e externo
+                    mesh.position.set(Math.cos(angle) * radius, 5, Math.sin(angle) * radius);
+                    this.scene.add(mesh);
                 }
-            });
+            },
 
-            // 3. Processamento Mecânico de Objetos (Caixas e Projéteis 3D)
-            boxMeshes.forEach(box => {
-                if (box.active) {
-                    box.mesh.rotation.y += box.rotSpeed;
-                    box.mesh.position.y = box.originY + Math.sin(now / 200) * 0.2;
+            spawnEntities() {
+                // Instanciar Kart do Jogador Principal
+                const kartGeo = new THREE.BoxGeometry(3, 2, 5);
+                const kartMat = new THREE.MeshStandardMaterial({ color: activeSession.selectedCharacter.color, roughness: 0.4 });
+                this.playerKart = new THREE.Mesh(kartGeo, kartMat);
+                
+                // Rodas decorativas do Kart
+                const wheelGeo = new THREE.CylinderGeometry(0.8, 0.8, 1, 8);
+                const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827 });
+                const wheelPositions = [[-1.6,-0.6,1.8], [1.6,-0.6,1.8], [-1.6,-0.6,-1.8], [1.6,-0.6,-1.8]];
+                wheelPositions.forEach(pos => {
+                    let wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                    wheel.rotation.z = Math.PI / 2;
+                    wheel.position.set(...pos);
+                    this.playerKart.add(wheel);
+                });
 
-                    // Colisão da Caixa de Item com o Jogador Local
-                    if (!localRacer.finished && Math.hypot(localRacer.x - box.mesh.position.x, localRacer.z - box.mesh.position.z) < 5) {
-                        box.active = false;
-                        box.mesh.visible = false;
-                        box.respawnAt = now + 4000; // 4 Segundos para reaparecer
-                        if (!localRacer.item) {
-                            localRacer.item = ITEMS_POOL[Math.floor(Math.random() * ITEMS_POOL.length)];
-                            updateItemBoxHUD();
-                        }
+                this.playerKart.position.set(90, 1, 10);
+                this.scene.add(this.playerKart);
+                
+                // Setar atributos iniciais baseados na escolha do personagem
+                this.physics.maxSpeed = activeSession.selectedCharacter.speed;
+                this.physics.accel = activeSession.selectedCharacter.accel;
+                this.physics.x = this.playerKart.position.x;
+                this.physics.z = this.playerKart.position.z;
+
+                // Instanciar Inteligência Artificial (Bots Oponentes)
+                this.bots = [];
+                const botColors = [0xa855f7, 0xf97316, 0xeab308, 0xec4899, 0x14b8a6];
+                for(let i = 0; i < 5; i++) {
+                    let botMesh = new THREE.Mesh(kartGeo, new THREE.MeshStandardMaterial({ color: botColors[i] }));
+                    botMesh.position.set(92 + (i * 3), 1, 15 + (i * 5));
+                    this.scene.add(botMesh);
+                    this.bots.push({
+                        mesh: botMesh,
+                        angle: 0,
+                        radius: 90 + (i * 4),
+                        speed: 0.8 + Math.random() * 0.3,
+                        progress: 0
+                    });
+                }
+
+                // Instanciar Caixas Surpresa flutuantes na pista
+                this.boxes = [];
+                const boxGeo = new THREE.BoxGeometry(2, 2, 2);
+                const boxMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, transparent: true, opacity: 0.85 });
+                
+                for(let i = 0; i < 8; i++) {
+                    let box = new THREE.Mesh(boxGeo, boxMat);
+                    let angle = (i / 8) * Math.PI * 2;
+                    box.position.set(Math.cos(angle) * 95, 1.5, Math.sin(angle) * 95);
+                    this.scene.add(box);
+                    this.boxes.push(box);
+                }
+            },
+
+            updatePhysics() {
+                // Aceleração e Frenagem / Ré
+                if (inputs.forward) {
+                    this.physics.speed += this.physics.accel;
+                    if(this.physics.speed > this.physics.maxSpeed) this.physics.speed = this.physics.maxSpeed;
+                } else if (inputs.backward) {
+                    this.physics.speed -= this.physics.accel;
+                    if(this.physics.speed < -this.physics.maxSpeed/2) this.physics.speed = -this.physics.maxSpeed/2;
+                } else {
+                    this.physics.speed *= this.physics.drag;
+                }
+
+                // Mecânica Avançada de Derrapagem (Drift)
+                if (inputs.drift && Math.abs(this.physics.speed) > 0.3) {
+                    AudioManager.playDrift();
+                    this.physics.turnSpeed = 0.06; // Faz curvas fechadas ao derrapar
+                    this.physics.driftBonus += 0.01;
+                } else {
+                    this.physics.turnSpeed = 0.04;
+                    if(this.physics.driftBonus > 0.2) {
+                        // Aplica mini-turbo instantâneo ao soltar o drift
+                        this.physics.speed += 0.5;
+                        AudioManager.playTurbo();
                     }
-                } else if (now > box.respawnAt) {
-                    box.active = true;
-                    box.mesh.visible = true;
+                    this.physics.driftBonus = 0;
                 }
-            });
 
-            update3DProjectilesSystem(dt);
+                // Curvas / Direção
+                if (inputs.left) this.physics.angle += this.physics.turnSpeed;
+                if (inputs.right) this.physics.angle -= this.physics.turnSpeed;
 
-            // 4. Mecânica da Câmera Cinemática em 3ª Pessoa Traseira
-            if(localRacer.rootGroup) {
-                const lookAtPos = new THREE.Vector3(localRacer.x, 1, localRacer.z);
-                const targetCamX = localRacer.x - Math.sin(localRacer.angle) * 18;
-                const targetCamZ = localRacer.z - Math.cos(localRacer.angle) * 18;
-                const targetCamY = 7;
+                // Atualização de Vetores de Translação Tridimensional
+                this.physics.x += Math.sin(this.physics.angle) * this.physics.speed;
+                this.physics.z += Math.cos(this.physics.angle) * this.physics.speed;
 
-                // Suavização Cinematográfica (Lerp) para simulação de balanço por velocidade
-                camera.position.x += (targetCamX - camera.position.x) * 0.1;
-                camera.position.z += (targetCamZ - camera.position.z) * 0.1;
-                camera.position.y += (targetCamY - camera.position.y) * 0.1;
-                camera.lookAt(lookAtPos);
-            }
+                this.playerKart.position.x = this.physics.x;
+                this.playerKart.position.z = this.physics.z;
+                this.playerKart.rotation.y = this.physics.angle;
 
-            renderer.render(scene, camera);
-            drawHUDMinimap2D();
-        }
+                // Câmera dinâmica em terceira pessoa seguindo perfeitamente o Kart
+                this.camera.position.x = this.playerKart.position.x - Math.sin(this.physics.angle) * 15;
+                this.camera.position.z = this.playerKart.position.z - Math.cos(this.physics.angle) * 15;
+                this.camera.position.y = this.playerKart.position.y + 6;
+                this.camera.lookAt(this.playerKart.position);
 
-        // --- SISTEMA DE VERIFICAÇÃO DE CHECKPOINTS E CHEGADA ---
-        function checkTrackCheckpointsSystem(r) {
-            const mapData = MAPS[activeRoom.mapId];
-            const tx = Math.floor((r.x + (mapData.width * TILE_SIZE)/2) / TILE_SIZE);
-            const tz = Math.floor((r.z + (mapData.height * TILE_SIZE)/2) / TILE_SIZE);
+                // UI update do Velocímetro
+                document.getElementById('hud-speed').innerText = Math.round(Math.abs(this.physics.speed) * 120);
+            },
 
-            if (tx < 0 || tz < 0 || tx >= mapData.width || tz >= mapData.height) return;
-            const currentTile = mapData.grid[tz][tx];
+            updateEntities() {
+                const pPos = this.playerKart.position;
 
-            // Mecânica Simples de 2 Checkpoints Centrais para Prevenir Trapaças de Atalho
-            if (currentTile === 7 && r.checkpoint === 0) r.checkpoint = 1;
-            if (currentTile === 1 && tx === Math.floor(mapData.width/2) && r.checkpoint === 1) r.checkpoint = 2;
-
-            if (currentTile === 3 && r.checkpoint === 2) {
-                r.checkpoint = 0;
-                r.lap++;
-                if (r.id === 'player_local') document.getElementById('hud-lap').textContent = `${r.lap > 3 ? 3 : r.lap} / 3`;
-
-                if (r.lap > 3) {
-                    r.finished = true;
-                    r.time = Date.now() - raceStartTimestamp;
-                    if (r.id === 'player_local') triggerRaceFinishView();
-                }
-            }
-        }
-
-        function checkWall3DCollision(x, z) {
-            const mapData = MAPS[activeRoom.mapId];
-            const tx = Math.floor((x + (mapData.width * TILE_SIZE)/2) / TILE_SIZE);
-            const tz = Math.floor((z + (mapData.height * TILE_SIZE)/2) / TILE_SIZE);
-            
-            if (tx < 0 || tz < 0 || tx >= mapData.width || tz >= mapData.height) return true;
-            return mapData.grid[tz][tx] === 2; // Bloqueio de Colisão se for Parede
-        }
-
-        // --- GESTÃO LOGÍSTICA DE ITENS ARMAMENTOS 3D ---
-        function updateItemBoxHUD() {
-            const el = document.getElementById('hud-item-box');
-            if(!localRacer.item) { el.textContent = '❓'; el.style.borderColor = '#3f3f46'; return; }
-            if(localRacer.item === 'rocket') el.textContent = '🚀';
-            if(localRacer.item === 'banana') el.textContent = '🍌';
-            if(localRacer.item === 'shield') el.textContent = '🛡️';
-            el.style.borderColor = '#eab308';
-        }
-
-        function executeRacerItemTrigger(r) {
-            const type = r.item;
-            r.item = null;
-            if (r.id === 'player_local') updateItemBoxHUD();
-
-            if (type === 'shield') {
-                r.activeShield = true;
-                // Escudo visual: esfera brilhante em torno do Kart
-                const sGeo = new THREE.SphereGeometry(3, 8, 8);
-                const sMat = new THREE.MeshBasicMaterial({ color: 0x00a8ff, wireframe: true, transparent: true, opacity: 0.3 });
-                const sMesh = new THREE.Mesh(sGeo, sMat);
-                r.rootGroup.add(sMesh);
-                setTimeout(() => { r.activeShield = false; r.rootGroup.remove(sMesh); }, 6000);
-            } 
-            else if (type === 'rocket') {
-                // Instanciação de Míssil Teleguiado Direcional 3D
-                const pGeo = new THREE.CylinderGeometry(0.4, 0.4, 2, 8);
-                pGeo.rotateX(Math.PI / 2);
-                const pMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
-                const mesh = new THREE.Mesh(pGeo, pMat);
-                mesh.position.set(r.x, 0.8, r.z);
-                scene.add(mesh);
-
-                projectileMeshes.push({
-                    type: 'rocket', mesh: mesh, ownerId: r.id,
-                    x: r.x, z: r.z, angle: r.angle, speed: 40, life: 3.0
+                // Atualizar Movimentação de Inteligência Artificial dos Bots
+                this.bots.forEach(bot => {
+                    bot.progress += bot.speed * 0.005;
+                    bot.mesh.position.x = Math.cos(bot.progress) * bot.radius;
+                    bot.mesh.position.z = Math.sin(bot.progress) * bot.radius;
+                    bot.mesh.rotation.y = -bot.progress + Math.PI/2;
                 });
-            }
-            else if (type === 'banana') {
-                // Casca Obstáculo estático no chão da pista
-                const pGeo = new THREE.BoxGeometry(1.5, 0.4, 1.5);
-                const pMat = new THREE.MeshStandardMaterial({ color: 0xffea00, roughness: 0.2 });
-                const mesh = new THREE.Mesh(pGeo, pMat);
-                // Coloca um pouco atrás do carro
-                const bx = r.x - Math.sin(r.angle) * 4;
-                const bz = r.z - Math.cos(r.angle) * 4;
-                mesh.position.set(bx, 0.2, bz);
-                scene.add(mesh);
 
-                projectileMeshes.push({
-                    type: 'banana', mesh: mesh, ownerId: r.id,
-                    x: bx, z: bz, angle: 0, speed: 0, life: 15.0
-                });
-            }
-        }
+                // Rotação e Colisão de Caixas de Itens
+                this.boxes.forEach(box => {
+                    box.rotation.y += 0.02;
+                    box.rotation.x += 0.01;
 
-        function update3DProjectilesSystem(dt) {
-            const now = Date.now();
-            for (let i = projectileMeshes.length - 1; i >= 0; i--) {
-                const p = projectileMeshes[i];
-                p.life -= dt;
-
-                if (p.type === 'rocket') {
-                    p.x += Math.sin(p.angle) * p.speed * dt * 8;
-                    p.z += Math.cos(p.angle) * p.speed * dt * 8;
-                    p.mesh.position.set(p.x, 0.8, p.z);
-                    p.mesh.rotation.y = p.angle;
-                }
-
-                // Avaliar Colisão contra Entidades do Grid de 6 Competidores
-                racersGrid.forEach(r => {
-                    if (r.finished || r.id === p.ownerId || now < r.stunUntil) return;
-
-                    const dist = Math.hypot(r.x - p.x, r.z - p.z);
-                    if (dist < 4.5) {
-                        p.life = -1; // Explodir projétil
-                        if (r.activeShield) {
-                            r.activeShield = false; // Escudo absorve impacto
-                        } else {
-                            r.stunUntil = now + (p.type === 'rocket' ? 2500 : 1500); // Tempo atordoado
-                        }
+                    // Detecção de Proximidade / Colisão AABB simples
+                    if(box.visible && pPos.distanceTo(box.position) < 3.5) {
+                        box.visible = false;
+                        AudioManager.playItemPickup();
+                        this.sortearItem();
+                        setTimeout(() => { box.visible = true; }, 5000); // Respawn de 5 segundos
                     }
                 });
+            },
 
-                // Auto-destruição por tempo ou impacto com paredes externas
-                if (p.life <= 0 || checkWall3DCollision(p.x, p.z)) {
-                    scene.remove(p.mesh);
-                    projectileMeshes.splice(i, 1);
+            sortearItem() {
+                if(this.physics.currentItem) return; // Só pode carregar um item por vez
+                const randomItem = GAME_DATA.items[Math.floor(Math.random() * GAME_DATA.items.length)];
+                this.physics.currentItem = randomItem;
+                const boxEl = document.getElementById('hud-item-box');
+                boxEl.innerText = randomItem.icon;
+                boxEl.classList.remove('animate-pulse');
+            },
+
+            useActiveItem() {
+                if(!this.physics.currentItem) return;
+                
+                // Tratar disparos e ações baseadas no item ativo
+                if(this.physics.currentItem.name === 'Turbo') {
+                    this.physics.speed += 0.6;
+                    AudioManager.playTurbo();
+                } else if(this.physics.currentItem.name === 'Moedas') {
+                    playerProfile.coins += 5;
+                    document.getElementById('hud-coins').innerText = parseInt(document.getElementById('hud-coins').innerText) + 5;
+                    AudioManager.playTone(1200, 'sine', 0.1, 0.1);
+                } else {
+                    // Outros itens emitem som tático padrão
+                    AudioManager.playTone(400, 'triangle', 0.3);
+                }
+
+                // Resetar slot do HUD
+                this.physics.currentItem = null;
+                document.getElementById('hud-item-box').innerText = '❓';
+                document.getElementById('hud-item-box').classList.add('animate-pulse');
+            },
+
+            animate() {
+                if(!activeSession.isMatchActive) return;
+                requestAnimationFrame(() => this.animate());
+
+                this.updatePhysics();
+                this.updateEntities();
+
+                this.renderer.render(this.scene, this.camera);
+            },
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            },
+
+            shutdown() {
+                activeSession.isMatchActive = false;
+                const container = document.getElementById('canvas-container');
+                if(this.renderer) {
+                    container.removeChild(this.renderer.domElement);
+                    this.renderer.dispose();
                 }
             }
-        }
+        };
 
-        // --- EXIBIÇÃO DE PLACAR FINAL E PERSISTÊNCIA ---
-        function triggerRaceFinishView() {
-            gameActive = false;
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        /**
+         * GERENCIADOR E FLUXO DE TELAS DA INTERFACE (MÁQUINA DE ESTADOS DO MENU)
+         */
+        const UIManager = {
+            init() {
+                this.setupCoreEvents();
+                this.renderSelectionGrids();
+                this.showScreen('screen-intro');
+                
+                // Simulação da Intro Cinematográfica Profissional
+                setTimeout(() => {
+                    AudioManager.init();
+                    AudioManager.playIntro();
+                    this.showScreen('screen-auth');
+                }, 2500);
+            },
 
-            // Ordenação dos Resultados Reais da Corrida (Quem completou e tempo menor vence)
-            const leaderboard = [...racersGrid];
-            leaderboard.sort((a, b) => {
-                if (a.finished && b.finished) return a.time - b.time;
-                if (a.finished) return -1;
-                if (b.finished) return 1;
-                return b.lap - a.lap;
-            });
+            showScreen(screenId) {
+                const screens = ['screen-intro', 'screen-auth', 'screen-menu', 'screen-lobby', 'screen-selector', 'screen-hud', 'screen-results'];
+                screens.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(id === screenId) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                });
+            },
 
-            // Se o Humano Venceu a Corrida contra os 6, computar vitória na persistência
-            if (leaderboard[0].id === 'player_local') {
-                sessionUser.wins = (sessionUser.wins || 0) + 1;
-                localStorage.setItem('bv_kart_profile', JSON.stringify(sessionUser));
-                document.getElementById('stat-wins').textContent = sessionUser.wins;
-                document.getElementById('stat-points').textContent = (sessionUser.wins * 100) + " PTS";
-            }
+            setupCoreEvents() {
+                // Login
+                document.getElementById('btn-login').addEventListener('click', () => {
+                    const user = document.getElementById('auth-username').value.trim();
+                    if(user) playerProfile.username = user;
+                    this.updateMenuHUD();
+                    this.showScreen('screen-menu');
+                });
 
-            const container = document.getElementById('results-leaderboard-container');
-            container.innerHTML = '';
+                // Modos de Jogo
+                document.getElementById('btn-mode-solo').addEventListener('click', () => {
+                    activeSession.mode = 'solo';
+                    this.showScreen('screen-selector');
+                });
 
-            leaderboard.forEach((r, idx) => {
-                const isMe = r.id === 'player_local';
-                const timeStr = r.finished ? `${(r.time / 1000).toFixed(2)}s` : "Não Concluiu";
-                container.innerHTML += `
-                    <div class="flex justify-between items-center p-3 border-b border-zinc-800 ${isMe ? 'bg-yellow-500/10 rounded-xl' : ''}">
-                        <span class="font-hud font-bold ${isMe ? 'text-yellow-400' : 'text-zinc-300'}">${idx + 1}º - ${r.name}</span>
-                        <span class="text-xs text-zinc-500 font-mono">${timeStr}</span>
+                document.getElementById('btn-mode-multi').addEventListener('click', () => {
+                    activeSession.mode = 'multi';
+                    activeSession.roomCode = Math.random().toString(36).substring(2,6).toUpperCase();
+                    document.getElementById('lobby-code-display').innerText = activeSession.roomCode;
+                    this.setupLobbyMock();
+                    this.showScreen('screen-lobby');
+                });
+
+                document.getElementById('btn-leave-lobby').addEventListener('click', () => this.showScreen('screen-menu'));
+                document.getElementById('btn-start-match').addEventListener('click', () => this.showScreen('screen-selector'));
+
+                // Confirmação de Corrida e Ignição do Motor 3D
+                document.getElementById('btn-confirm-selection').addEventListener('click', () => {
+                    this.showScreen('screen-hud');
+                    activeSession.isMatchActive = true;
+                    document.getElementById('hud-coins').innerText = '0';
+                    Engine3D.init();
+
+                    // Temporizador para encerrar a corrida de forma arcade após 35 segundos
+                    setTimeout(() => {
+                        this.finalizarCorridaArcade();
+                    }, 35000);
+                });
+
+                document.getElementById('btn-results-exit').addEventListener('click', () => {
+                    Engine3D.shutdown();
+                    this.updateMenuHUD();
+                    this.showScreen('screen-menu');
+                });
+
+                // Vinculação dos Inputs de Teclado Computador (WASD / Setas)
+                window.addEventListener('keydown', (e) => this.handleKeyboard(e, true));
+                window.addEventListener('keyup', (e) => this.handleKeyboard(e, false));
+
+                // Vinculação dos Controles Virtuais do Mobile / Touch Screens
+                this.bindMobileControl('ctrl-left', 'left');
+                this.bindMobileControl('ctrl-right', 'right');
+                this.bindMobileControl('ctrl-gas', 'forward');
+                this.bindMobileControl('ctrl-drift', 'drift');
+                document.getElementById('ctrl-item').addEventListener('touchstart', () => Engine3D.useActiveItem());
+            },
+
+            handleKeyboard(e, isPressed) {
+                switch(e.key.toLowerCase()) {
+                    case 'w': case 'arrowup': inputs.forward = isPressed; break;
+                    case 's': case 'arrowdown': inputs.backward = isPressed; break;
+                    case 'a': case 'arrowleft': inputs.left = isPressed; break;
+                    case 'd': case 'arrowright': inputs.right = isPressed; break;
+                    case ' ': inputs.drift = isPressed; break; // Barra de Espaço faz o Drift
+                    case 'shift': if(isPressed) Engine3D.useActiveItem(); break;
+                }
+            },
+
+            bindMobileControl(elementId, inputKey) {
+                const el = document.getElementById(elementId);
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); inputs[inputKey] = true; });
+                el.addEventListener('touchend', (e) => { e.preventDefault(); inputs[inputKey] = false; });
+            },
+
+            updateMenuHUD() {
+                document.getElementById('menu-username').innerText = playerProfile.username;
+                document.getElementById('menu-avatar').innerText = playerProfile.username.substring(0,2).toUpperCase();
+                document.getElementById('menu-level').innerText = playerProfile.level;
+                document.getElementById('menu-xp').innerText = playerProfile.xp;
+                document.getElementById('menu-coins').innerText = `🪙 ${playerProfile.coins}`;
+            },
+
+            renderSelectionGrids() {
+                // Injetar Personagens na Grid de Opções
+                const charGrid = document.getElementById('character-grid');
+                charGrid.innerHTML = '';
+                GAME_DATA.characters.forEach((char, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = `p-3 rounded-xl border flex flex-col items-center justify-center text-center transition ${index === 0 ? 'border-cyan-400 bg-cyan-950/40' : 'border-white/10 bg-slate-800/40'}`;
+                    btn.innerHTML = `<span class="text-3xl mb-1">${char.icon}</span><span class="font-bold text-sm block">${char.name}</span><span class="text-[10px] text-gray-400">${char.stat}</span>`;
+                    btn.onclick = () => {
+                        activeSession.selectedCharacter = char;
+                        Array.from(charGrid.children).forEach(c => c.className = 'p-3 rounded-xl border border-white/10 bg-slate-800/40 flex flex-col items-center justify-center text-center');
+                        btn.className = 'p-3 rounded-xl border border-cyan-400 bg-cyan-950/40 flex flex-col items-center justify-center text-center';
+                    };
+                    charGrid.appendChild(btn);
+                });
+
+                // Injetar Circuitos/Mapas na Grid de Opções
+                const trackGrid = document.getElementById('track-grid');
+                trackGrid.innerHTML = '';
+                GAME_DATA.tracks.forEach((track, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = `w-full p-3 rounded-xl border flex justify-between items-center text-left transition ${index === 0 ? 'border-emerald-400 bg-emerald-950/40' : 'border-white/10 bg-slate-800/40'}`;
+                    btn.innerHTML = `<div><span class="font-bold block">${track.name}</span><span class="text-xs text-gray-400">Ambiente: ${track.env}</span></div><span class="text-xs font-bold px-2 py-1 rounded bg-black/30 text-emerald-400">${track.difficulty}</span>`;
+                    btn.onclick = () => {
+                        activeSession.selectedTrack = track;
+                        Array.from(trackGrid.children).forEach(t => t.className = 'w-full p-3 rounded-xl border border-white/10 bg-slate-800/40 flex justify-between items-center text-left');
+                        btn.className = 'w-full p-3 rounded-xl border border-emerald-400 bg-emerald-950/40 flex justify-between items-center text-left';
+                    };
+                    trackGrid.appendChild(btn);
+                });
+            },
+
+            setupLobbyMock() {
+                // Mock Inteligente para simular o comportamento de sincronização do Firestore no Lobby
+                const playerListEl = document.getElementById('lobby-players-list');
+                playerListEl.innerHTML = `
+                    <div class="flex justify-between items-center bg-slate-800 p-3 rounded-xl border border-purple-500/30">
+                        <div class="flex items-center space-x-2"><span>👑</span><span class="font-bold">${playerProfile.username} (Você)</span></div>
+                        <span class="text-xs text-emerald-400 font-bold">Líder</span>
                     </div>
                 `;
-            });
-
-            document.getElementById('scr-results').classList.remove('hidden');
-        }
-
-        document.getElementById('btn-results-finish').onclick = () => {
-            document.getElementById('scr-results').classList.add('hidden');
-            
-            // Limpeza completa de alocação de memória gráfica WebGL do Three.js
-            if(scene) {
-                while(scene.children.length > 0){ 
-                    scene.remove(scene.children[0]); 
-                }
-            }
-            document.getElementById('game-render-viewport').innerHTML = '';
-            
-            navigateTo(document.getElementById('scr-menu'));
-        };
-
-        // --- RENDERIZADOR 2D DO MINIMAPA DO HUD ---
-        const miniCanvas = document.getElementById('hud-minimap');
-        const miniCtx = miniCanvas.getContext('2d');
-
-        function drawHUDMinimap2D() {
-            const mapData = MAPS[activeRoom.mapId];
-            miniCtx.clearRect(0,0,128,128);
-
-            const scaleX = 128 / (mapData.width * TILE_SIZE);
-            const scaleZ = 128 / (mapData.height * TILE_SIZE);
-
-            // Desenhar Traçado Cinza da Estrada
-            miniCtx.fillStyle = "rgba(40,40,50,0.7)";
-            for(let z=0; z<mapData.height; z++) {
-                for(let x=0; x<mapData.width; x++) {
-                    if (mapData.grid[z][x] === 1 || mapData.grid[z][x] === 3 || mapData.grid[z][x] === 7) {
-                        miniCtx.fillRect(x*TILE_SIZE*scaleX, z*TILE_SIZE*scaleZ, TILE_SIZE*scaleX+0.5, TILE_SIZE*scaleZ+0.5);
-                    }
-                }
-            }
-
-            // Marcar todos os 6 Competidores ativos na tela em tempo real
-            racersGrid.forEach(r => {
-                miniCtx.fillStyle = CHARACTERS[r.charId].color;
-                const cx = (r.x + (mapData.width*TILE_SIZE)/2) * scaleX;
-                const cz = (r.z + (mapData.height*TILE_SIZE)/2) * scaleZ;
-                miniCtx.beginPath();
-                miniCtx.arc(cx, cz, r.id === 'player_local' ? 3.5 : 2.5, 0, Math.PI*2);
-                miniCtx.fill();
                 
-                if (r.id === 'player_local') {
-                    miniCtx.strokeStyle = '#fff';
-                    miniCtx.lineWidth = 1;
-                    miniCtx.stroke();
-                }
-            });
-        }
-
-        // --- ESCUTAS E ARRANJOS DE ENTRADAS DE TECLADO / DESKTOP ---
-        window.addEventListener('keydown', (e) => {
-            if(keyMap[e.key] !== undefined) inputState[keyMap[e.key]] = 1;
-        });
-        window.addEventListener('keyup', (e) => {
-            if(keyMap[e.key] !== undefined) inputState[keyMap[e.key]] = 0;
-        });
-
-        // --- VINCULAÇÃO DE BOTÕES TOUCH MOBILE ---
-        function registerTouchInput(id, property) {
-            const el = document.getElementById(id);
-            if(!el) return;
-            const press = (e) => { e.preventDefault(); inputState[property] = 1; };
-            const release = (e) => { e.preventDefault(); inputState[property] = 0; };
-            el.addEventListener('touchstart', press, {passive:false});
-            el.addEventListener('touchend', release, {passive:false});
-            el.addEventListener('mousedown', press);
-            el.addEventListener('mouseup', release);
-            el.addEventListener('mouseleave', release);
-        }
-        registerTouchInput('touch-left', 'left');
-        registerTouchInput('touch-right', 'right');
-        registerTouchInput('touch-gas', 'gas');
-        registerTouchInput('touch-brake', 'brake');
-        registerTouchInput('touch-item', 'fire');
-
-        window.addEventListener('resize', () => {
-            viewWidth = window.innerWidth; viewHeight = window.innerHeight;
-            if (camera && renderer) {
-                camera.aspect = viewWidth / viewHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(viewWidth, viewHeight);
-            }
-        });
-
-        // Inicialização Automática com FadeOut da Intro após Carregar Assets do Dom
-        window.onload = () => {
-            setTimeout(() => {
-                const intro = document.getElementById('scr-intro');
-                intro.style.opacity = '0';
+                // Bots entram no Lobby progressivamente preenchendo a sala online
                 setTimeout(() => {
-                    intro.classList.add('hidden');
-                    checkPersistentAuth();
-                }, 1000);
-            }, 2500);
+                    playerListEl.innerHTML += `
+                        <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-xl">
+                            <div class="flex items-center space-x-2"><span>🤖</span><span>Bot Spark</span></div>
+                            <span class="text-xs text-purple-400">Pronto</span>
+                        </div>
+                    `;
+                    document.getElementById('lobby-ready-count').innerText = '2';
+                    document.getElementById('btn-start-match').classList.remove('hidden');
+                }, 1500);
+            },
+
+            finalizarCorridaArcade() {
+                // Coleta e persistência local de dados pós-partida
+                const moedasGanhas = Math.floor(Math.random() * 15) + 5;
+                const xpGanho = 250;
+
+                playerProfile.coins += moedasGanhas;
+                playerProfile.xp += xpGanho;
+                if(playerProfile.xp >= playerProfile.level * 500) {
+                    playerProfile.level += 1;
+                }
+
+                document.getElementById('res-pos').innerText = "1º Lugar (Vitória!)";
+                document.getElementById('res-coins').innerText = `+${moedasGanhas} Moedas`;
+                document.getElementById('res-xp').innerText = `+${xpGanho} XP`;
+                
+                this.showScreen('screen-results');
+            }
         };
+
+        // Inicializar a aplicação ao concluir carregamento do DOM
+        window.addEventListener('DOMContentLoaded', () => UIManager.init());
     </script>
 </body>
 </html>
