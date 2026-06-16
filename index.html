@@ -2,717 +2,456 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOMVELHOGAMES - Retro Kart Arcade</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumComm // Porta de Enlace</title>
     <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; user-select: none; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #000; }
-        canvas { display: block; width: 100%; height: 100%; }
-        .pixelated { image-rendering: pixelated; }
-        /* Ocultar barra de rolagem e toques longos no mobile */
-        * { -webkit-tap-highlight-color: transparent; outline: none; }
+        /* ESTILO FUTURISTA (CYBERPUNK / SCI-FI) */
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff0055;
+            --dark-bg: #0a0a12;
+            --panel-bg: #121225;
+            --text-color: #c4c4d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Tela de Login */
+        .login-container {
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            padding: 30px;
+            border-radius: 8px;
+            width: 350px;
+            text-align: center;
+        }
+
+        h2 {
+            color: var(--neon-cyan);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--neon-magenta);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #05050a;
+            border: 1px solid var(--neon-cyan);
+            color: #fff;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input:focus {
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid var(--neon-magenta);
+            color: var(--neon-magenta);
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: var(--neon-magenta);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.6);
+        }
+
+        /* Painel do Chat (Oculto inicialmente) */
+        .chat-container {
+            display: none;
+            width: 90vw;
+            max-width: 900px;
+            height: 85vh;
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-cyan);
+            grid-template-columns: 250px 1fr;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Barra Lateral */
+        .sidebar {
+            background: #0d0d1f;
+            border-right: 2px solid var(--neon-cyan);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .info-porta {
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-porta h3 {
+            color: var(--neon-cyan);
+            font-size: 16px;
+        }
+
+        .user-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: rgba(0, 243, 255, 0.1);
+            border-left: 3px solid var(--neon-cyan);
+            font-size: 14px;
+        }
+
+        /* Área de Mensagens */
+        .main-chat {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: rgba(0, 243, 255, 0.05);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            text-align: center;
+            font-weight: bold;
+            color: var(--neon-cyan);
+        }
+
+        .messages-display {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Balões de Mensagem */
+        .msg {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 6px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg.sent {
+            background: rgba(255, 0, 85, 0.1);
+            border: 1px solid var(--neon-magenta);
+            align-self: flex-end;
+        }
+
+        .msg.received {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--neon-cyan);
+            align-self: flex-start;
+        }
+
+        .msg .username {
+            font-size: 11px;
+            color: var(--neon-cyan);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .msg.sent .username {
+            color: var(--neon-magenta);
+        }
+
+        /* Estilos de mídia dentro do chat */
+        .msg img, .msg video {
+            max-width: 100%;
+            border-radius: 4px;
+            margin-top: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .download-btn {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 10px;
+            background: #000;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        /* Input de envio */
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+            display: flex;
+            gap: 10px;
+            background: #0a0a14;
+        }
+
+        .file-label {
+            padding: 10px;
+            background: transparent;
+            border: 1px dashed var(--neon-cyan);
+            color: var(--neon-cyan);
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #msg-input {
+            flex-grow: 1;
+        }
     </style>
 </head>
-<body class="text-white select-none">
+<body>
 
-    <div id="ui-container" class="absolute inset-0 z-10 pointer-events-none">
-        
-        <div id="screen-intro" class="absolute inset-0 bg-black flex flex-col items-center justify-center pointer-events-auto transition-opacity duration-1000 z-50">
-            <div class="text-center animate-bounce">
-                <h1 class="text-5xl md:text-7xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600 drop-shadow-lg">
-                    BOMVELHOGAMES
-                </h1>
-                <p class="text-sm md:text-xl tracking-widest text-gray-400 mt-4 uppercase">Apresenta um novo clássico</p>
-            </div>
-            <div class="absolute bottom-10 text-xs text-gray-600 animate-pulse">Carregando motores gráficos...</div>
+    <div class="login-container" id="login-screen">
+        <h2>Acesso à Rede</h2>
+        <div class="input-group">
+            <label>Identificação (Nome)</label>
+            <input type="text" id="username-input" placeholder="Ex: Cyber_Ghost">
         </div>
-
-        <div id="screen-auth" class="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-emerald-950 flex items-center justify-center pointer-events-auto hidden z-40">
-            <div class="bg-slate-900/80 p-8 rounded-2xl border border-white/10 w-full max-w-md backdrop-blur-md shadow-2xl">
-                <h2 class="text-3xl font-black text-center mb-6 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">ENTRAR NO CLUBE</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Apelido do Piloto</label>
-                        <input id="auth-username" type="text" max="12" placeholder="Ex: Player1" class="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:border-cyan-500 transition">
-                    </div>
-                    <button id="btn-login" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 font-bold p-3 rounded-lg shadow-lg transform active:scale-95 transition">
-                        Entrar e Salvar na Nuvem
-                    </button>
-                    <div class="text-center text-xs text-gray-500">Ao entrar, sua conta local será criada e sincronizada automaticamente.</div>
-                </div>
-            </div>
+        <div class="input-group">
+            <label>Código da Porta (Frequência)</label>
+            <input type="text" id="room-input" placeholder="Ex: 9942">
         </div>
-
-        <div id="screen-menu" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col justify-between p-6 pointer-events-auto hidden z-30">
-            <div class="flex justify-between items-center bg-slate-900/80 p-4 rounded-xl border border-white/5">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-yellow-400 to-red-500 flex items-center justify-center font-black text-xl text-slate-950" id="menu-avatar">P1</div>
-                    <div>
-                        <div class="font-bold text-lg" id="menu-username">Piloto</div>
-                        <div class="text-xs text-cyan-400">Nível <span id="menu-level">1</span> (<span id="menu-xp">0</span> XP)</div>
-                    </div>
-                </div>
-                <div class="flex space-x-6">
-                    <div class="text-right"><span class="text-xs text-gray-400 block">Moedas</span><span class="font-bold text-yellow-400 text-xl" id="menu-coins">🪙 0</span></div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full my-auto">
-                <button id="btn-mode-solo" class="h-40 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-2xl border border-blue-400/30 p-6 flex flex-col justify-between items-start group hover:scale-105 transition transform shadow-xl">
-                    <span class="bg-blue-500/30 text-blue-200 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Singleplayer</span>
-                    <div class="text-left">
-                        <h3 class="text-2xl font-black mb-1">Modo Solo VS Bots</h3>
-                        <p class="text-xs text-blue-200/80">Treine suas habilidades, vença corridas e ganhe XP offline.</p>
-                    </div>
-                </button>
-                <button id="btn-mode-multi" class="h-40 bg-gradient-to-br from-purple-600 to-pink-800 rounded-2xl border border-purple-400/30 p-6 flex flex-col justify-between items-start group hover:scale-105 transition transform shadow-xl">
-                    <span class="bg-purple-500/30 text-purple-200 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Multiplayer</span>
-                    <div class="text-left">
-                        <h3 class="text-2xl font-black mb-1">Salas Online</h3>
-                        <p class="text-xs text-purple-200/80">Crie ou entre em salas privadas usando chaves de 4 dígitos.</p>
-                    </div>
-                </button>
-            </div>
-
-            <div class="flex justify-center space-x-4 max-w-md mx-auto w-full">
-                <button id="btn-open-rank" class="flex-1 bg-slate-900 border border-white/10 p-3 rounded-xl text-sm font-bold hover:bg-slate-800 transition text-center">🏆 Ranking</button>
-                <button id="btn-open-achieve" class="flex-1 bg-slate-900 border border-white/10 p-3 rounded-xl text-sm font-bold hover:bg-slate-800 transition text-center">🎖️ Conquistas</button>
-            </div>
-        </div>
-
-        <div id="screen-lobby" class="absolute inset-0 bg-slate-950 flex flex-col p-6 pointer-events-auto hidden z-30">
-            <div class="flex justify-between items-center mb-6">
-                <button id="btn-leave-lobby" class="bg-slate-800 px-4 py-2 rounded-lg text-sm font-bold border border-white/10 hover:bg-slate-700">← Sair</button>
-                <div class="text-center">
-                    <div class="text-xs text-gray-400 uppercase tracking-widest">Código da Sala</div>
-                    <div class="text-3xl font-black text-purple-400 tracking-wider" id="lobby-code-display">A1B2</div>
-                </div>
-                <button id="btn-start-match" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-2 rounded-lg text-sm tracking-wide shadow-lg hidden">COMEÇAR</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0">
-                <div class="md:col-span-2 bg-slate-900/50 rounded-2xl border border-white/5 p-4 flex flex-col">
-                    <h3 class="font-bold text-gray-400 text-xs uppercase mb-3">Pilotos na Sala (<span id="lobby-ready-count">1</span>/6)</h3>
-                    <div id="lobby-players-list" class="space-y-2 flex-1 overflow-y-auto">
-                        </div>
-                </div>
-                <div class="bg-slate-900/50 rounded-2xl border border-white/5 p-4 flex flex-col h-full">
-                    <h3 class="font-bold text-gray-400 text-xs uppercase mb-3">Chat da Sala</h3>
-                    <div id="lobby-chat-messages" class="flex-1 overflow-y-auto text-xs space-y-2 mb-3 bg-black/30 p-2 rounded-lg"></div>
-                    <div class="flex space-x-2">
-                        <input id="lobby-chat-input" type="text" placeholder="Digitar mensagem..." class="flex-1 bg-slate-800 text-xs rounded-lg p-2 border border-white/10 text-white">
-                        <button id="btn-send-chat" class="bg-purple-600 px-3 rounded-lg text-xs font-bold">Enviar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="screen-selector" class="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col p-6 pointer-events-auto hidden z-30">
-            <h2 class="text-2xl font-black text-center mb-6 uppercase tracking-wider text-cyan-400">Prepare sua Corrida</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 max-w-5xl mx-auto w-full min-h-0 overflow-y-auto">
-                <div class="bg-slate-900/60 p-4 rounded-2xl border border-white/10 flex flex-col">
-                    <h3 class="font-bold text-sm text-gray-400 uppercase mb-4">1. Escolha seu Piloto</h3>
-                    <div class="grid grid-cols-2 gap-3 flex-1" id="character-grid">
-                        </div>
-                </div>
-                <div class="bg-slate-900/60 p-4 rounded-2xl border border-white/10 flex flex-col">
-                    <h3 class="font-bold text-sm text-gray-400 uppercase mb-4">2. Escolha o Circuito</h3>
-                    <div class="space-y-3 flex-1" id="track-grid">
-                        </div>
-                </div>
-            </div>
-
-            <button id="btn-confirm-selection" class="mt-6 max-w-md mx-auto w-full bg-gradient-to-r from-emerald-500 to-teal-600 font-black p-4 rounded-xl shadow-xl transform active:scale-95 transition tracking-widest text-center">
-                CONFIRMAR E PILOTAR!
-            </button>
-        </div>
-
-        <div id="screen-hud" class="absolute inset-0 flex flex-col justify-between p-4 hidden z-20">
-            <div class="flex justify-between items-start">
-                <div class="flex space-x-4">
-                    <div class="bg-black/70 border border-white/20 px-4 py-2 rounded-xl text-center backdrop-blur-sm">
-                        <span class="text-xs text-gray-400 block uppercase font-bold">Posição</span>
-                        <span class="text-3xl font-black text-yellow-400" id="hud-position">1º</span><span class="text-sm text-gray-400">/6</span>
-                    </div>
-                    <div class="bg-black/70 border border-white/20 px-4 py-2 rounded-xl text-center backdrop-blur-sm">
-                        <span class="text-xs text-gray-400 block uppercase font-bold">Volta</span>
-                        <span class="text-2xl font-black text-white" id="hud-lap">1/3</span>
-                    </div>
-                </div>
-                <div class="w-16 h-16 bg-black/80 border-2 border-yellow-400 rounded-2xl flex items-center justify-center text-3xl shadow-2xl backdrop-blur-sm relative animate-pulse" id="hud-item-box">
-                    ❓
-                </div>
-                <div class="text-right space-y-1">
-                    <div class="bg-black/70 border border-white/20 px-4 py-2 rounded-xl backdrop-blur-sm">
-                        <span class="text-xs text-gray-400 block font-bold uppercase">Velocidade</span>
-                        <span class="text-2xl font-black text-cyan-400" id="hud-speed">0</span> <span class="text-xs text-cyan-500">km/h</span>
-                    </div>
-                    <div class="bg-black/70 border border-white/20 px-3 py-1 rounded-lg inline-block backdrop-blur-sm">
-                        <span class="text-yellow-400 font-bold text-sm">🪙 <span id="hud-coins">0</span></span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="mobile-controls" class="flex justify-between items-end p-2 md:hidden pointer-events-auto">
-                <div class="flex space-x-3">
-                    <button id="ctrl-left" class="w-16 h-16 bg-slate-800/80 border border-white/20 rounded-full flex items-center justify-center text-2xl font-bold active:bg-cyan-500 transition shadow-lg">◀</button>
-                    <button id="ctrl-right" class="w-16 h-16 bg-slate-800/80 border border-white/20 rounded-full flex items-center justify-center text-2xl font-bold active:bg-cyan-500 transition shadow-lg">▶</button>
-                </div>
-                <div class="flex flex-col space-y-3 items-end">
-                    <button id="ctrl-item" class="w-14 h-14 bg-yellow-500/90 text-slate-950 font-black rounded-full flex items-center justify-center text-xl shadow-lg active:scale-90 transition">ITEM</button>
-                    <div class="flex space-x-3">
-                        <button id="ctrl-drift" class="w-16 h-16 bg-purple-600/80 border border-white/20 rounded-full flex items-center justify-center text-xs font-black active:bg-purple-500 shadow-lg">DRIFT</button>
-                        <button id="ctrl-gas" class="w-20 h-20 bg-emerald-500/90 text-slate-950 font-black rounded-full flex items-center justify-center text-lg shadow-xl active:bg-emerald-400">CORRER</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="screen-results" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 pointer-events-auto hidden z-40">
-            <div class="max-w-md w-full bg-slate-900 border border-white/10 rounded-2xl p-6 text-center shadow-2xl">
-                <h2 class="text-4xl font-black mb-2 tracking-wide" id="results-title">VITÓRIA!</h2>
-                <p class="text-xs text-gray-400 mb-6" id="results-subtitle">Você completou o circuito com maestria.</p>
-                
-                <div class="bg-black/40 p-4 rounded-xl space-y-3 text-left mb-6">
-                    <div class="flex justify-between text-sm"><span class="text-gray-400">Sua Posição:</span><span class="font-bold text-yellow-400" id="res-pos">1º Lugar</span></div>
-                    <div class="flex justify-between text-sm"><span class="text-gray-400">Moedas Coletadas:</span><span class="font-bold text-amber-400" id="res-coins">+0 Moedas</span></div>
-                    <div class="flex justify-between text-sm"><span class="text-gray-400">XP Adquirido:</span><span class="font-bold text-cyan-400" id="res-xp">+0 XP</span></div>
-                </div>
-
-                <button id="btn-results-exit" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 font-bold p-3 rounded-xl shadow-lg">Voltar ao Menu</button>
-            </div>
-        </div>
-
+        <button onclick="conectarRede()">Conectar à Porta</button>
     </div>
 
-    <div id="canvas-container" class="w-full h-full absolute inset-0 z-0"></div>
+    <div class="chat-container" id="chat-screen">
+        <div class="sidebar">
+            <div class="info-porta">
+                <h3>PORTA: <span id="display-porta" style="color: var(--neon-magenta);">0000</span></h3>
+                <p style="font-size: 11px; margin-top: 5px;">Usuário: <span id="display-usuario">---</span></p>
+            </div>
+            <div class="info-porta">
+                <h4 style="font-size: 12px; color: var(--neon-cyan); margin-bottom: 10px;">CANAIS DISPONÍVEIS</h4>
+                <div class="user-item" style="border-left-color: var(--neon-magenta);"># Grupo Geral da Porta</div>
+            </div>
+            <div class="user-list">
+                <h4 style="font-size: 12px; margin-bottom: 10px;">CONECTADOS</h4>
+                <div id="lista-usuarios">
+                    </div>
+            </div>
+            <button onclick="desconectar()" style="padding: 5px; font-size: 12px;">Desconectar</button>
+        </div>
+
+        <div class="main-chat">
+            <div class="chat-header">
+                // TRANSMISSÃO EM TEMPO REAL // P2P SIMULADO
+            </div>
+            
+            <div class="messages-display" id="chat-messages">
+                </div>
+
+            <div class="chat-input-area">
+                <label class="file-label" title="Anexar Arquivo/Foto/Vídeo">
+                    📎
+                    <input type="file" id="file-input" onchange="enviarArquivo(this)">
+                </label>
+                <input type="text" id="msg-input" placeholder="Digite sua transmissão codificada..." onkeypress="verificarTecla(event)">
+                <button onclick="enviarMensagemTextual()" style="margin: 0; width: auto; padding: 0 20px;">Enviar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        /**
-         * CONFIGURAÇÃO E DADOS GERAIS DO JOGO
-         */
-        const GAME_DATA = {
-            characters: [
-                { id: 'speedy', name: 'Zorvath', stat: 'Velocidade Max', desc: 'Invasor espacial veloz', icon: '👽', color: 0x38bdf8, speed: 1.3, accel: 0.04 },
-                { id: 'tank', name: 'Brokk', stat: 'Resistência / Peso', desc: 'Guerreiro de puro minério', icon: '🤖', color: 0x64748b, speed: 1.1, accel: 0.03 },
-                { id: 'accel', name: 'Kira', stat: 'Aceleração Súbita', desc: 'Ninja urbana ágil', icon: '🦊', color: 0xf43f5e, speed: 1.15, accel: 0.06 },
-                { id: 'tactical', name: 'Dr. Chronos', stat: 'Duração de Item', desc: 'Cientista temporal excêntrico', icon: '🧠', color: 0x10b981, speed: 1.2, accel: 0.045 }
-            ],
-            tracks: [
-                { id: 'city', name: 'Metrópole Neon', env: 'Cidade', difficulty: 'Fácil', bg: 'from-blue-900 to-indigo-990', color: 0x0f172a },
-                { id: 'snow', name: 'Pico Congelado', env: 'Neve', difficulty: 'Média', bg: 'from-sky-300 to-blue-600', color: 0xe2e8f0 },
-                { id: 'volcano', name: 'Caldera de Fogo', env: 'Vulcão', difficulty: 'Difícil', bg: 'from-orange-600 to-red-950', color: 0x450a0a }
-            ],
-            items: [
-                { name: 'Turbo', icon: '🚀' },
-                { name: 'Escudo', icon: '🛡️' },
-                { name: 'Míssil', icon: '🎯' },
-                { name: 'Bola de Fogo', icon: '🔥' },
-                { name: 'Raio', icon: '⚡' },
-                { name: 'Moedas', icon: '🪙' }
-            ]
-        };
+        // Variáveis de estado do usuário
+        let usuarioAtual = "";
+        let portaAtual = "";
 
-        // Estado do Jogador Local (Salvo localmente por padrão, extensível para nuvem)
-        let playerProfile = {
-            username: "Piloto Local",
-            level: 1,
-            xp: 0,
-            coins: 50,
-            unlockedCharacters: ['speedy', 'tank'],
-            achievements: []
-        };
+        // Função para simular a entrada na rede/porta
+        function conectarRede() {
+            const nome = document.getElementById('username-input').value.trim();
+            const porta = document.getElementById('room-input').value.trim();
 
-        // Configurações Globais da Sessão Ativa
-        let activeSession = {
-            mode: 'solo', // 'solo' ou 'multi'
-            roomCode: '',
-            selectedCharacter: GAME_DATA.characters[0],
-            selectedTrack: GAME_DATA.tracks[0],
-            isMatchActive: false
-        };
+            if (!nome || !porta) {
+                alert("Por favor, preencha o Nome e o Código da Porta!");
+                return;
+            }
 
-        // Inputs e Controles de Direção/Ação
-        const inputs = { forward: false, backward: false, left: false, right: false, drift: false, useItem: false };
+            usuarioAtual = nome;
+            portaAtual = porta;
 
-        /**
-         * AUDIO MANAGER PROCEDURAL (Sintetizador Web Audio API para rodar totalmente offline)
-         */
-        const AudioManager = {
-            ctx: null,
-            init() {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            },
-            playTone(freq, type, duration, vol=0.1) {
-                if(!this.ctx) return;
-                try {
-                    let osc = this.ctx.createOscillator();
-                    let gain = this.ctx.createGain();
-                    osc.type = type;
-                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + duration);
-                } catch(e) {}
-            },
-            playIntro() {
-                this.playTone(261.63, 'sine', 0.2);
-                setTimeout(() => this.playTone(329.63, 'sine', 0.2), 150);
-                setTimeout(() => this.playTone(392.00, 'sine', 0.2), 300);
-                setTimeout(() => this.playTone(523.25, 'triangle', 0.5, 0.2), 450);
-            },
-            playItemPickup() { this.playTone(880, 'square', 0.15, 0.05); setTimeout(() => this.playTone(1760, 'square', 0.2, 0.05), 80); },
-            playDrift() { this.playTone(120 + Math.random()*50, 'sawtooth', 0.05, 0.02); },
-            playTurbo() { this.playTone(600, 'sawtooth', 0.4, 0.1); }
-        };
+            // Atualiza dados na tela do chat
+            document.getElementById('display-porta').innerText = portaAtual;
+            document.getElementById('display-usuario').innerText = usuarioAtual;
 
-        /**
-         * CORE ENGINE DO SISTEMA DE CORRIDA 3D (THREE.JS)
-         */
-        const Engine3D = {
-            scene: null, camera: null, renderer: null,
-            trackMesh: null, playerKart: null, bots: [], boxes: [], coins: [],
-            clock: new THREE.Clock(),
+            // Transiciona as telas
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'grid';
+
+            // Simula outros usuários entrando na mesma porta para deixar o ambiente vivo
+            gerarUsuariosSimulados();
+
+            // Mensagem do sistema
+            adicionarMensagemSistema(`Você se conectou à porta criptografada [${portaAtual}].`);
+        }
+
+        function desconectar() {
+            document.getElementById('chat-messages').innerHTML = '';
+            document.getElementById('chat-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'block';
+        }
+
+        // Envia mensagem de texto normal
+        function enviarMensagemTextual() {
+            const input = document.getElementById('msg-input');
+            const texto = input.value.trim();
             
-            // Física Básica do Veículo do Jogador
-            physics: { speed: 0, maxSpeed: 1.2, accel: 0.04, drag: 0.96, turnSpeed: 0.04, angle: 0, x: 0, z: 0, driftBonus: 0, currentItem: null },
+            if (texto === "") return;
 
-            init() {
-                const container = document.getElementById('canvas-container');
-                this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(activeSession.selectedTrack.color);
-                
-                // Névoa para efeito de profundidade e otimização
-                this.scene.fog = new THREE.FogExp2(activeSession.selectedTrack.color, 0.015);
+            renderizarMensagem(usuarioAtual, texto, 'sent');
+            input.value = "";
 
-                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.shadowMap.enabled = true;
-                container.appendChild(this.renderer.domElement);
+            // Simula uma resposta automatica de alguém na mesma porta após 2 segundos
+            setTimeout(() => {
+                simularRespostaInimiga();
+            }, 2000);
+        }
 
-                this.buildLights();
-                this.buildTrackAndEnvironment();
-                this.spawnEntities();
-
-                window.addEventListener('resize', () => this.onWindowResize());
-                this.animate();
-            },
-
-            buildLights() {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-                this.scene.add(ambientLight);
-                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                dirLight.position.set(100, 150, 50);
-                this.scene.add(dirLight);
-            },
-
-            buildTrackAndEnvironment() {
-                // Desenhar Pista de Corrida (Formato Oval Clássico com Largura Otimizada)
-                const trackGeometry = new THREE.RingGeometry(80, 110, 64);
-                const trackMaterial = new THREE.MeshStandardMaterial({ color: 0x334155, side: THREE.DoubleSide, roughness: 0.8 });
-                this.trackMesh = new THREE.Mesh(trackGeometry, trackMaterial);
-                this.trackMesh.rotation.x = Math.PI / 2;
-                this.scene.add(this.trackMesh);
-
-                // Adicionar Linha de Chegada / Largada
-                const lineGeo = new THREE.PlaneGeometry(30, 4);
-                const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-                const finishLine = new THREE.Mesh(lineGeo, lineMat);
-                finishLine.position.set(95, 0.02, 0);
-                finishLine.rotation.x = Math.PI / 2;
-                this.scene.add(finishLine);
-
-                // Elementos decorativos do ambiente (Cenário de acordo com a pista escolhida)
-                let envColor = activeSession.selectedTrack.env === 'Vulcão' ? 0xea580c : (activeSession.selectedTrack.env === 'Neve' ? 0xffffff : 0x22c55e);
-                const decorGeo = new THREE.ConeGeometry(3, 10, 4);
-                const decorMat = new THREE.MeshStandardMaterial({ color: envColor });
-                
-                for(let i = 0; i < 40; i++) {
-                    let mesh = new THREE.Mesh(decorGeo, decorMat);
-                    let angle = (i / 40) * Math.PI * 2;
-                    let radius = i % 2 === 0 ? 70 : 120; // Alterna entre lado interno e externo
-                    mesh.position.set(Math.cos(angle) * radius, 5, Math.sin(angle) * radius);
-                    this.scene.add(mesh);
-                }
-            },
-
-            spawnEntities() {
-                // Instanciar Kart do Jogador Principal
-                const kartGeo = new THREE.BoxGeometry(3, 2, 5);
-                const kartMat = new THREE.MeshStandardMaterial({ color: activeSession.selectedCharacter.color, roughness: 0.4 });
-                this.playerKart = new THREE.Mesh(kartGeo, kartMat);
-                
-                // Rodas decorativas do Kart
-                const wheelGeo = new THREE.CylinderGeometry(0.8, 0.8, 1, 8);
-                const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827 });
-                const wheelPositions = [[-1.6,-0.6,1.8], [1.6,-0.6,1.8], [-1.6,-0.6,-1.8], [1.6,-0.6,-1.8]];
-                wheelPositions.forEach(pos => {
-                    let wheel = new THREE.Mesh(wheelGeo, wheelMat);
-                    wheel.rotation.z = Math.PI / 2;
-                    wheel.position.set(...pos);
-                    this.playerKart.add(wheel);
-                });
-
-                this.playerKart.position.set(90, 1, 10);
-                this.scene.add(this.playerKart);
-                
-                // Setar atributos iniciais baseados na escolha do personagem
-                this.physics.maxSpeed = activeSession.selectedCharacter.speed;
-                this.physics.accel = activeSession.selectedCharacter.accel;
-                this.physics.x = this.playerKart.position.x;
-                this.physics.z = this.playerKart.position.z;
-
-                // Instanciar Inteligência Artificial (Bots Oponentes)
-                this.bots = [];
-                const botColors = [0xa855f7, 0xf97316, 0xeab308, 0xec4899, 0x14b8a6];
-                for(let i = 0; i < 5; i++) {
-                    let botMesh = new THREE.Mesh(kartGeo, new THREE.MeshStandardMaterial({ color: botColors[i] }));
-                    botMesh.position.set(92 + (i * 3), 1, 15 + (i * 5));
-                    this.scene.add(botMesh);
-                    this.bots.push({
-                        mesh: botMesh,
-                        angle: 0,
-                        radius: 90 + (i * 4),
-                        speed: 0.8 + Math.random() * 0.3,
-                        progress: 0
-                    });
-                }
-
-                // Instanciar Caixas Surpresa flutuantes na pista
-                this.boxes = [];
-                const boxGeo = new THREE.BoxGeometry(2, 2, 2);
-                const boxMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, transparent: true, opacity: 0.85 });
-                
-                for(let i = 0; i < 8; i++) {
-                    let box = new THREE.Mesh(boxGeo, boxMat);
-                    let angle = (i / 8) * Math.PI * 2;
-                    box.position.set(Math.cos(angle) * 95, 1.5, Math.sin(angle) * 95);
-                    this.scene.add(box);
-                    this.boxes.push(box);
-                }
-            },
-
-            updatePhysics() {
-                // Aceleração e Frenagem / Ré
-                if (inputs.forward) {
-                    this.physics.speed += this.physics.accel;
-                    if(this.physics.speed > this.physics.maxSpeed) this.physics.speed = this.physics.maxSpeed;
-                } else if (inputs.backward) {
-                    this.physics.speed -= this.physics.accel;
-                    if(this.physics.speed < -this.physics.maxSpeed/2) this.physics.speed = -this.physics.maxSpeed/2;
-                } else {
-                    this.physics.speed *= this.physics.drag;
-                }
-
-                // Mecânica Avançada de Derrapagem (Drift)
-                if (inputs.drift && Math.abs(this.physics.speed) > 0.3) {
-                    AudioManager.playDrift();
-                    this.physics.turnSpeed = 0.06; // Faz curvas fechadas ao derrapar
-                    this.physics.driftBonus += 0.01;
-                } else {
-                    this.physics.turnSpeed = 0.04;
-                    if(this.physics.driftBonus > 0.2) {
-                        // Aplica mini-turbo instantâneo ao soltar o drift
-                        this.physics.speed += 0.5;
-                        AudioManager.playTurbo();
-                    }
-                    this.physics.driftBonus = 0;
-                }
-
-                // Curvas / Direção
-                if (inputs.left) this.physics.angle += this.physics.turnSpeed;
-                if (inputs.right) this.physics.angle -= this.physics.turnSpeed;
-
-                // Atualização de Vetores de Translação Tridimensional
-                this.physics.x += Math.sin(this.physics.angle) * this.physics.speed;
-                this.physics.z += Math.cos(this.physics.angle) * this.physics.speed;
-
-                this.playerKart.position.x = this.physics.x;
-                this.playerKart.position.z = this.physics.z;
-                this.playerKart.rotation.y = this.physics.angle;
-
-                // Câmera dinâmica em terceira pessoa seguindo perfeitamente o Kart
-                this.camera.position.x = this.playerKart.position.x - Math.sin(this.physics.angle) * 15;
-                this.camera.position.z = this.playerKart.position.z - Math.cos(this.physics.angle) * 15;
-                this.camera.position.y = this.playerKart.position.y + 6;
-                this.camera.lookAt(this.playerKart.position);
-
-                // UI update do Velocímetro
-                document.getElementById('hud-speed').innerText = Math.round(Math.abs(this.physics.speed) * 120);
-            },
-
-            updateEntities() {
-                const pPos = this.playerKart.position;
-
-                // Atualizar Movimentação de Inteligência Artificial dos Bots
-                this.bots.forEach(bot => {
-                    bot.progress += bot.speed * 0.005;
-                    bot.mesh.position.x = Math.cos(bot.progress) * bot.radius;
-                    bot.mesh.position.z = Math.sin(bot.progress) * bot.radius;
-                    bot.mesh.rotation.y = -bot.progress + Math.PI/2;
-                });
-
-                // Rotação e Colisão de Caixas de Itens
-                this.boxes.forEach(box => {
-                    box.rotation.y += 0.02;
-                    box.rotation.x += 0.01;
-
-                    // Detecção de Proximidade / Colisão AABB simples
-                    if(box.visible && pPos.distanceTo(box.position) < 3.5) {
-                        box.visible = false;
-                        AudioManager.playItemPickup();
-                        this.sortearItem();
-                        setTimeout(() => { box.visible = true; }, 5000); // Respawn de 5 segundos
-                    }
-                });
-            },
-
-            sortearItem() {
-                if(this.physics.currentItem) return; // Só pode carregar um item por vez
-                const randomItem = GAME_DATA.items[Math.floor(Math.random() * GAME_DATA.items.length)];
-                this.physics.currentItem = randomItem;
-                const boxEl = document.getElementById('hud-item-box');
-                boxEl.innerText = randomItem.icon;
-                boxEl.classList.remove('animate-pulse');
-            },
-
-            useActiveItem() {
-                if(!this.physics.currentItem) return;
-                
-                // Tratar disparos e ações baseadas no item ativo
-                if(this.physics.currentItem.name === 'Turbo') {
-                    this.physics.speed += 0.6;
-                    AudioManager.playTurbo();
-                } else if(this.physics.currentItem.name === 'Moedas') {
-                    playerProfile.coins += 5;
-                    document.getElementById('hud-coins').innerText = parseInt(document.getElementById('hud-coins').innerText) + 5;
-                    AudioManager.playTone(1200, 'sine', 0.1, 0.1);
-                } else {
-                    // Outros itens emitem som tático padrão
-                    AudioManager.playTone(400, 'triangle', 0.3);
-                }
-
-                // Resetar slot do HUD
-                this.physics.currentItem = null;
-                document.getElementById('hud-item-box').innerText = '❓';
-                document.getElementById('hud-item-box').classList.add('animate-pulse');
-            },
-
-            animate() {
-                if(!activeSession.isMatchActive) return;
-                requestAnimationFrame(() => this.animate());
-
-                this.updatePhysics();
-                this.updateEntities();
-
-                this.renderer.render(this.scene, this.camera);
-            },
-
-            onWindowResize() {
-                this.camera.aspect = window.innerWidth / window.innerHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-            },
-
-            shutdown() {
-                activeSession.isMatchActive = false;
-                const container = document.getElementById('canvas-container');
-                if(this.renderer) {
-                    container.removeChild(this.renderer.domElement);
-                    this.renderer.dispose();
-                }
+        function verificarTecla(e) {
+            if (e.key === 'Enter') {
+                enviarMensagemTextual();
             }
-        };
+        }
 
-        /**
-         * GERENCIADOR E FLUXO DE TELAS DA INTERFACE (MÁQUINA DE ESTADOS DO MENU)
-         */
-        const UIManager = {
-            init() {
-                this.setupCoreEvents();
-                this.renderSelectionGrids();
-                this.showScreen('screen-intro');
-                
-                // Simulação da Intro Cinematográfica Profissional
-                setTimeout(() => {
-                    AudioManager.init();
-                    AudioManager.playIntro();
-                    this.showScreen('screen-auth');
-                }, 2500);
-            },
+        // Lida com o envio de arquivos (Fotos, Vídeos, Documentos) sem salvar no servidor
+        function enviarArquivo(input) {
+            const file = input.files[0];
+            if (!file) return;
 
-            showScreen(screenId) {
-                const screens = ['screen-intro', 'screen-auth', 'screen-menu', 'screen-lobby', 'screen-selector', 'screen-hud', 'screen-results'];
-                screens.forEach(id => {
-                    const el = document.getElementById(id);
-                    if(id === screenId) el.classList.remove('hidden');
-                    else el.classList.add('hidden');
-                });
-            },
+            // Transforma o arquivo em uma URL temporária do próprio navegador (Blob)
+            // Isso garante que o arquivo existe apenas localmente e não em um banco de dados externo
+            const urlTemporaria = URL.createObjectURL(file);
+            
+            renderizarMidia(usuarioAtual, file.name, file.type, urlTemporaria, 'sent');
+            
+            // Limpa o input de arquivo para permitir novos uploads
+            input.value = '';
+        }
 
-            setupCoreEvents() {
-                // Login
-                document.getElementById('btn-login').addEventListener('click', () => {
-                    const user = document.getElementById('auth-username').value.trim();
-                    if(user) playerProfile.username = user;
-                    this.updateMenuHUD();
-                    this.showScreen('screen-menu');
-                });
+        // Renderiza textos no chat
+        function renderizarMensagem(usuario, texto, tipo) {
+            const painel = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${tipo}`;
 
-                // Modos de Jogo
-                document.getElementById('btn-mode-solo').addEventListener('click', () => {
-                    activeSession.mode = 'solo';
-                    this.showScreen('screen-selector');
-                });
+            msgDiv.innerHTML = `
+                <span class="username">${usuario}</span>
+                <p>${texto}</p>
+            `;
 
-                document.getElementById('btn-mode-multi').addEventListener('click', () => {
-                    activeSession.mode = 'multi';
-                    activeSession.roomCode = Math.random().toString(36).substring(2,6).toUpperCase();
-                    document.getElementById('lobby-code-display').innerText = activeSession.roomCode;
-                    this.setupLobbyMock();
-                    this.showScreen('screen-lobby');
-                });
+            painel.appendChild(msgDiv);
+            painel.scrollTop = painel.scrollHeight;
+        }
 
-                document.getElementById('btn-leave-lobby').addEventListener('click', () => this.showScreen('screen-menu'));
-                document.getElementById('btn-start-match').addEventListener('click', () => this.showScreen('screen-selector'));
+        // Renderiza fotos, vídeos e arquivos com a opção de download imediato
+        function renderizarMidia(usuario, nomeArquivo, tipoArquivo, url, tipoExibicao) {
+            const painel = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${tipoExibicao}`;
 
-                // Confirmação de Corrida e Ignição do Motor 3D
-                document.getElementById('btn-confirm-selection').addEventListener('click', () => {
-                    this.showScreen('screen-hud');
-                    activeSession.isMatchActive = true;
-                    document.getElementById('hud-coins').innerText = '0';
-                    Engine3D.init();
+            let conteudoMidia = `<span class="username">${usuario}</span><p style="font-size:12px; color:var(--neon-cyan);">Arquivo recebido: ${nomeArquivo}</p>`;
 
-                    // Temporizador para encerrar a corrida de forma arcade após 35 segundos
-                    setTimeout(() => {
-                        this.finalizarCorridaArcade();
-                    }, 35000);
-                });
-
-                document.getElementById('btn-results-exit').addEventListener('click', () => {
-                    Engine3D.shutdown();
-                    this.updateMenuHUD();
-                    this.showScreen('screen-menu');
-                });
-
-                // Vinculação dos Inputs de Teclado Computador (WASD / Setas)
-                window.addEventListener('keydown', (e) => this.handleKeyboard(e, true));
-                window.addEventListener('keyup', (e) => this.handleKeyboard(e, false));
-
-                // Vinculação dos Controles Virtuais do Mobile / Touch Screens
-                this.bindMobileControl('ctrl-left', 'left');
-                this.bindMobileControl('ctrl-right', 'right');
-                this.bindMobileControl('ctrl-gas', 'forward');
-                this.bindMobileControl('ctrl-drift', 'drift');
-                document.getElementById('ctrl-item').addEventListener('touchstart', () => Engine3D.useActiveItem());
-            },
-
-            handleKeyboard(e, isPressed) {
-                switch(e.key.toLowerCase()) {
-                    case 'w': case 'arrowup': inputs.forward = isPressed; break;
-                    case 's': case 'arrowdown': inputs.backward = isPressed; break;
-                    case 'a': case 'arrowleft': inputs.left = isPressed; break;
-                    case 'd': case 'arrowright': inputs.right = isPressed; break;
-                    case ' ': inputs.drift = isPressed; break; // Barra de Espaço faz o Drift
-                    case 'shift': if(isPressed) Engine3D.useActiveItem(); break;
-                }
-            },
-
-            bindMobileControl(elementId, inputKey) {
-                const el = document.getElementById(elementId);
-                el.addEventListener('touchstart', (e) => { e.preventDefault(); inputs[inputKey] = true; });
-                el.addEventListener('touchend', (e) => { e.preventDefault(); inputs[inputKey] = false; });
-            },
-
-            updateMenuHUD() {
-                document.getElementById('menu-username').innerText = playerProfile.username;
-                document.getElementById('menu-avatar').innerText = playerProfile.username.substring(0,2).toUpperCase();
-                document.getElementById('menu-level').innerText = playerProfile.level;
-                document.getElementById('menu-xp').innerText = playerProfile.xp;
-                document.getElementById('menu-coins').innerText = `🪙 ${playerProfile.coins}`;
-            },
-
-            renderSelectionGrids() {
-                // Injetar Personagens na Grid de Opções
-                const charGrid = document.getElementById('character-grid');
-                charGrid.innerHTML = '';
-                GAME_DATA.characters.forEach((char, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = `p-3 rounded-xl border flex flex-col items-center justify-center text-center transition ${index === 0 ? 'border-cyan-400 bg-cyan-950/40' : 'border-white/10 bg-slate-800/40'}`;
-                    btn.innerHTML = `<span class="text-3xl mb-1">${char.icon}</span><span class="font-bold text-sm block">${char.name}</span><span class="text-[10px] text-gray-400">${char.stat}</span>`;
-                    btn.onclick = () => {
-                        activeSession.selectedCharacter = char;
-                        Array.from(charGrid.children).forEach(c => c.className = 'p-3 rounded-xl border border-white/10 bg-slate-800/40 flex flex-col items-center justify-center text-center');
-                        btn.className = 'p-3 rounded-xl border border-cyan-400 bg-cyan-950/40 flex flex-col items-center justify-center text-center';
-                    };
-                    charGrid.appendChild(btn);
-                });
-
-                // Injetar Circuitos/Mapas na Grid de Opções
-                const trackGrid = document.getElementById('track-grid');
-                trackGrid.innerHTML = '';
-                GAME_DATA.tracks.forEach((track, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = `w-full p-3 rounded-xl border flex justify-between items-center text-left transition ${index === 0 ? 'border-emerald-400 bg-emerald-950/40' : 'border-white/10 bg-slate-800/40'}`;
-                    btn.innerHTML = `<div><span class="font-bold block">${track.name}</span><span class="text-xs text-gray-400">Ambiente: ${track.env}</span></div><span class="text-xs font-bold px-2 py-1 rounded bg-black/30 text-emerald-400">${track.difficulty}</span>`;
-                    btn.onclick = () => {
-                        activeSession.selectedTrack = track;
-                        Array.from(trackGrid.children).forEach(t => t.className = 'w-full p-3 rounded-xl border border-white/10 bg-slate-800/40 flex justify-between items-center text-left');
-                        btn.className = 'w-full p-3 rounded-xl border border-emerald-400 bg-emerald-950/40 flex justify-between items-center text-left';
-                    };
-                    trackGrid.appendChild(btn);
-                });
-            },
-
-            setupLobbyMock() {
-                // Mock Inteligente para simular o comportamento de sincronização do Firestore no Lobby
-                const playerListEl = document.getElementById('lobby-players-list');
-                playerListEl.innerHTML = `
-                    <div class="flex justify-between items-center bg-slate-800 p-3 rounded-xl border border-purple-500/30">
-                        <div class="flex items-center space-x-2"><span>👑</span><span class="font-bold">${playerProfile.username} (Você)</span></div>
-                        <span class="text-xs text-emerald-400 font-bold">Líder</span>
-                    </div>
-                `;
-                
-                // Bots entram no Lobby progressivamente preenchendo a sala online
-                setTimeout(() => {
-                    playerListEl.innerHTML += `
-                        <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-xl">
-                            <div class="flex items-center space-x-2"><span>🤖</span><span>Bot Spark</span></div>
-                            <span class="text-xs text-purple-400">Pronto</span>
-                        </div>
-                    `;
-                    document.getElementById('lobby-ready-count').innerText = '2';
-                    document.getElementById('btn-start-match').classList.remove('hidden');
-                }, 1500);
-            },
-
-            finalizarCorridaArcade() {
-                // Coleta e persistência local de dados pós-partida
-                const moedasGanhas = Math.floor(Math.random() * 15) + 5;
-                const xpGanho = 250;
-
-                playerProfile.coins += moedasGanhas;
-                playerProfile.xp += xpGanho;
-                if(playerProfile.xp >= playerProfile.level * 500) {
-                    playerProfile.level += 1;
-                }
-
-                document.getElementById('res-pos').innerText = "1º Lugar (Vitória!)";
-                document.getElementById('res-coins').innerText = `+${moedasGanhas} Moedas`;
-                document.getElementById('res-xp').innerText = `+${xpGanho} XP`;
-                
-                this.showScreen('screen-results');
+            // Se for imagem, mostra o preview
+            if (tipoArquivo.startsWith('image/')) {
+                conteudoMidia += `<img src="${url}" alt="Imagem enviada">`;
+            } 
+            // Se for vídeo, gera o player
+            else if (tipoArquivo.startsWith('video/')) {
+                conteudoMidia += `<video controls src="${url}"></video>`;
             }
-        };
 
-        // Inicializar a aplicação ao concluir carregamento do DOM
-        window.addEventListener('DOMContentLoaded', () => UIManager.init());
+            // Botão de download (Garante que a pessoa "abaixe" o arquivo diretamente do link de memória)
+            conteudoMidia += `<br><a href="${url}" download="${nomeArquivo}" class="download-btn">⬇ Baixar Arquivo</a>`;
+
+            msgDiv.innerHTML = conteudoMidia;
+            painel.appendChild(msgDiv);
+            painel.scrollTop = painel.scrollHeight;
+        }
+
+        function adicionarMensagemSistema(texto) {
+            const painel = document.getElementById('chat-messages');
+            const aviso = document.createElement('div');
+            aviso.style = "text-align: center; font-size: 11px; color: rgba(0, 243, 255, 0.5); margin: 10px 0;";
+            aviso.innerText = `// SYS_ALERT: ${texto}`;
+            painel.appendChild(aviso);
+        }
+
+        // Funções de simulação para o chat não ficar vazio
+        function gerarUsuariosSimulados() {
+            const lista = document.getElementById('lista-usuarios');
+            lista.innerHTML = `
+                <div class="user-item">${usuarioAtual} (Você)</div>
+                <div class="user-item" style="opacity: 0.7;">Net_Runner_X</div>
+                <div class="user-item" style="opacity: 0.7;">Proxy_V</div>
+            `;
+        }
+
+        function simularRespostaInimiga() {
+            const respostas = [
+                "Dados recebidos na porta. Conexão está estável.",
+                "Alguém interceptando essa frequência? Mudei os pacotes.",
+                "Copiado. Limpando rastros da rede agora.",
+                "Arquivo descriptografado com sucesso."
+            ];
+            const respostaAleatoria = respostas[Math.floor(Math.random() * respostas.length)];
+            renderizarMensagem("Net_Runner_X", respostaAleatoria, 'received');
+        }
     </script>
 </body>
 </html>
