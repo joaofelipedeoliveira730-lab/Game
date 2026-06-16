@@ -2,253 +2,1129 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Kart SNES Online</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bomvelhinho Kart 3D - Ultimate Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
-        body { background: #050505; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
-        h1 { color: #00ff41; text-shadow: 0 0 10px #00ff41; margin-bottom: 15px; font-size: 2rem; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
         
-        /* Menu de Salas */
-        #lobby { background: #111; border: 3px solid #00ff41; padding: 25px; border-radius: 10px; width: 450px; text-align: center; box-shadow: 0 0 20px rgba(0,255,65,0.3); }
-        .menu-section { background: #1a1a1a; padding: 15px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #333; text-align: left; }
-        h3 { color: #ff00ff; margin-bottom: 10px; font-size: 1.1rem; }
-        p { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
-        input { width: 100%; padding: 10px; background: #222; border: 2px solid #00ff41; color: #fff; font-size: 1rem; border-radius: 5px; margin-bottom: 10px; }
-        button { width: 100%; padding: 12px; background: #ff00ff; border: none; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 5px; box-shadow: 0 4px #990099; }
-        button:active { transform: translateY(4px); box-shadow: none; }
-        .peer-id-display { font-size: 1.2rem; color: #00ffff; font-weight: bold; text-align: center; background: #000; padding: 5px; border-radius: 4px; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #03030c; font-family: 'Rajdhani', sans-serif; color: #fff; user-select: none; }
+        .font-hud { font-family: 'Orbitron', sans-serif; }
+        
+        /* Fundo Animado do Menu */
+        .animated-bg {
+            background: linear-gradient(125deg, #050515, #0b0b26, #150525, #020208);
+            background-size: 400% 400%;
+            animation: gradientMove 12s ease infinite;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-        /* Tela do Jogo e Elementos 3D Fake (Pseudo-3D) */
-        #game-container { display: none; position: relative; width: 800px; height: 450px; border: 4px solid #fff; background: #000; }
-        canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+        /* Neon FX */
+        .neon-border-blue { box-shadow: 0 0 15px rgba(0, 168, 255, 0.4), inset 0 0 15px rgba(0, 168, 255, 0.2); border: 2px solid #00a8ff; }
+        .neon-border-purple { box-shadow: 0 0 15px rgba(157, 0, 255, 0.4), inset 0 0 15px rgba(157, 0, 255, 0.2); border: 2px solid #9d00ff; }
+        .neon-text { text-shadow: 0 0 10px rgba(0, 255, 200, 0.6); }
 
-        /* HUD / Placar */
-        #hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; }
-        .panel { background: rgba(0, 0, 0, 0.85); padding: 10px; border-radius: 5px; border: 2px solid #ff00ff; font-size: 0.9rem; }
-        #status-txt { color: #00ff41; font-weight: bold; margin-top: 10px; text-align: center; }
+        .touch-btn { background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .touch-btn:active { background: #00a8ff; transform: scale(0.9); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="w-full h-full select-none">
 
-    <h1>SUPER KART SNES ONLINE</h1>
-
-    <div id="lobby">
-        <div class="menu-section">
-            <h3>1. Seu ID da Sala</h3>
-            <p>Envie este código para o seu amigo entrar na sua partida:</p>
-            <div id="my-id-view" class="peer-id-display">Carregando ID...</div>
+    <div id="scr-intro" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black transition-opacity duration-1000">
+        <div class="text-center animate-bounce">
+            <h1 class="font-hud text-5xl md:text-7xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
+                BOMVELHINHO
+            </h1>
+            <p class="font-hud text-xl md:text-2xl text-white tracking-widest mt-2 font-bold uppercase opacity-80">GAMES STUDIO</p>
         </div>
-
-        <div class="menu-section">
-            <h3>2. Entrar em uma Sala</h3>
-            <p>Cole o ID do seu amigo aqui embaixo e clique em conectar:</p>
-            <input type="text" id="peer-id-input" placeholder="Cole o ID do Host aqui">
-            <button onclick="connectToHost()">CONECTAR NA SALA</button>
+        <div class="mt-12 w-48 h-1 bg-zinc-900 rounded-full overflow-hidden">
+            <div class="h-full bg-cyan-400 w-full animate-[ping_1.5s_infinite]"></div>
         </div>
-        <div id="status-txt">Aguardando rede P2P...</div>
     </div>
 
-    <div id="game-container">
-        <canvas id="gameCanvas" width="400" height="225"></canvas>
-        <div id="hud">
-            <div class="panel">
-                <p style="color:#ff00ff;">RANKING</p>
-                <div id="rank-board">1° - Carregando...</div>
+    <div id="scr-auth" class="absolute inset-0 z-40 flex items-center justify-center animated-bg hidden">
+        <div class="bg-black/80 p-8 rounded-3xl neon-border-blue w-full max-w-md backdrop-blur-md transition-all">
+            <h2 class="font-hud text-3xl font-black text-center mb-2 tracking-tight text-cyan-400">CONECTAR AO GRID</h2>
+            <p class="text-center text-zinc-400 text-sm mb-6 uppercase tracking-wider">Crie ou acesse seu perfil de piloto</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-zinc-400 font-bold mb-1">Apelido do Piloto</label>
+                    <input id="auth-user" type="text" placeholder="Ex: SennaPro" class="w-full bg-zinc-900/90 border border-zinc-700 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-cyan-400">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-zinc-400 font-bold mb-1">Senha de Acesso</label>
+                    <input id="auth-pass" type="password" placeholder="******" class="w-full bg-zinc-900/90 border border-zinc-700 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-cyan-400">
+                </div>
+                <button id="btn-auth-confirm" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 py-4 rounded-xl font-hud font-bold text-lg tracking-wider shadow-lg transform active:scale-95 transition">
+                    ENTRAR NO LOBBY MUNDIAL
+                </button>
             </div>
-            <div class="panel">
-                <p id="room-role">Conexão: P2P</p>
-                <p id="ping-view">Ping: -- ms</p>
+            <p id="auth-error" class="text-red-500 text-center text-sm font-bold mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <div id="scr-menu" class="absolute inset-0 z-30 flex items-center justify-center animated-bg hidden">
+        <div class="w-full max-w-4xl px-4 flex flex-col md:flex-row gap-8 items-center">
+            
+            <div class="w-full md:w-1/3 bg-black/70 p-6 rounded-3xl border border-zinc-800 text-center backdrop-blur-md">
+                <div class="w-20 h-20 bg-gradient-to-tr from-cyan-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center font-hud text-3xl font-black text-white shadow-lg">K</div>
+                <h3 id="menu-profile-name" class="font-hud text-2xl font-bold mt-3 text-white">Piloto</h3>
+                <span class="inline-block bg-cyan-500/10 text-cyan-400 text-xs px-3 py-1 rounded-full border border-cyan-500/20 uppercase font-bold mt-1 tracking-wider">Status: Online</span>
+                <div class="grid grid-cols-2 gap-2 mt-6 pt-6 border-t border-zinc-800 text-left">
+                    <div><p class="text-xs text-zinc-500 uppercase font-bold">Vitórias</p><p class="text-xl font-hud font-black text-yellow-400" id="stat-wins">0</p></div>
+                    <div><p class="text-xs text-zinc-500 uppercase font-bold">Pontos GP</p><p class="text-xl font-hud font-black text-purple-400" id="stat-points">0 PTS</p></div>
+                </div>
+                <button id="btn-logout" class="w-full bg-zinc-900 hover:bg-red-950/40 border border-zinc-800 hover:border-red-500/30 text-zinc-400 hover:text-red-400 py-2 rounded-xl text-sm font-bold mt-6 transition">DESCONECTAR</button>
+            </div>
+
+            <div class="w-full md:w-2/3 space-y-4">
+                <div class="text-center md:text-left mb-6">
+                    <h1 class="font-hud text-5xl font-black tracking-tight leading-none text-white">KART ARENA <span class="text-cyan-400 font-light">3D</span></h1>
+                    <p class="text-zinc-400 mt-2">Escolha seu modo de corrida, domine as curvas e use os itens com estratégia.</p>
+                </div>
+
+                <button id="btn-menu-solo" class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 p-5 rounded-2xl flex items-center justify-between shadow-xl hover:scale-[1.01] active:scale-95 transition text-left border border-cyan-400/20">
+                    <div>
+                        <h2 class="font-hud text-2xl font-black tracking-tight">MODO SOLO REALEJO</h2>
+                        <p class="text-sm text-white/80 font-medium">Treine e compita contra 5 bots inteligentes no grid.</p>
+                    </div>
+                    <span class="text-3xl">🏁</span>
+                </button>
+
+                <button id="btn-menu-multi" class="w-full bg-gradient-to-r from-purple-700 to-fuchsia-600 p-5 rounded-2xl flex items-center justify-between shadow-xl hover:scale-[1.01] active:scale-95 transition text-left border border-fuchsia-400/20">
+                    <div>
+                        <h2 class="font-hud text-2xl font-black tracking-tight">MULTIPLAYER ONLINE</h2>
+                        <p class="text-sm text-white/80 font-medium">Crie salas customizadas ou junte-se aos amigos na rede.</p>
+                    </div>
+                    <span class="text-3xl">🌐</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scr-room-manage" class="absolute inset-0 z-30 flex items-center justify-center animated-bg hidden">
+        <div class="w-full max-w-2xl px-4">
+            <div class="bg-black/80 p-8 rounded-3xl neon-border-purple backdrop-blur-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-hud text-3xl font-black text-fuchsia-400">SALAS MULTIPLAYER</h2>
+                    <button class="btn-back bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-xl text-sm font-bold transition">← VOLTAR</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4 border-b md:border-b-0 md:border-r border-zinc-800 pb-6 md:pb-0 md:pr-6">
+                        <h3 class="text-sm uppercase tracking-wider text-zinc-400 font-bold mb-2">Configurar Nova Corrida</h3>
+                        
+                        <div>
+                            <label class="block text-xs uppercase text-zinc-400 font-bold mb-1">Circuito / Mapa</label>
+                            <select id="cfg-map" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none">
+                                <option value="0">Circuito do Deserto Cinder</option>
+                                <option value="1">Pista Infernal do Vulcão</option>
+                                <option value="2">Estrada Cósmica Rainbow</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs uppercase text-zinc-400 font-bold mb-1">Dificuldade dos Bots</label>
+                            <select id="cfg-diff" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none">
+                                <option value="easy">50cc - Casual</option>
+                                <option value="medium" selected>100cc - Desafiador</option>
+                                <option value="hard">150cc - Extremo</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs uppercase text-zinc-400 font-bold mb-1">Chat de Texto Disponível?</label>
+                            <select id="cfg-chat" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white font-bold focus:outline-none">
+                                <option value="yes">Sim, Ativar Chat</option>
+                                <option value="no">Não, Desativar</option>
+                            </select>
+                        </div>
+
+                        <button id="btn-room-create" class="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-hud font-bold py-3 rounded-xl transition">
+                            CRIAR SALA CUSTOMIZADA
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col justify-center items-center space-y-4">
+                        <h3 class="text-sm uppercase tracking-wider text-zinc-400 font-bold text-center">Já possui um convite?</h3>
+                        <p class="text-xs text-zinc-500 text-center px-4">Insira o código alfanumérico da sala criada pelo seu amigo para sincronizar instantaneamente no grid.</p>
+                        <input id="input-room-code" type="text" placeholder="CÓDIGO DE 4 DÍGITOS" maxlength="4" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-center text-xl font-hud font-black tracking-widest text-yellow-400 focus:outline-none uppercase focus:border-yellow-400">
+                        <button id="btn-room-join" class="w-full bg-zinc-800 hover:bg-yellow-600 hover:text-black text-white font-hud font-bold py-3 rounded-xl transition">
+                            CONECTAR À SALA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scr-lobby" class="absolute inset-0 z-30 flex flex-col md:flex-row bg-zinc-950 hidden">
+        <div class="flex-1 p-6 flex flex-col h-1/2 md:h-full border-b md:border-b-0 md:border-r border-zinc-900 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                <div>
+                    <p class="text-xs uppercase text-zinc-500 font-bold">Identificação da Sala</p>
+                    <span id="lobby-code-display" class="font-hud text-2xl font-black text-yellow-400 tracking-widest">LOCAL</span>
+                </div>
+                <button class="btn-back bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-xl text-sm font-bold transition">SAIR DO LOBBY</button>
+            </div>
+
+            <h3 class="font-hud text-lg font-bold text-zinc-300 mb-3">ESCOLHA SEU VEÍCULO 3D</h3>
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <button class="btn-char-card p-3 bg-zinc-900 border-2 border-cyan-500 rounded-2xl transition text-center" data-char="0">
+                    <div class="w-10 h-10 rounded-xl bg-red-500 mx-auto mb-2 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
+                    <div class="font-bold text-sm">FAÍSCA</div>
+                    <div class="text-[10px] text-zinc-500 uppercase mt-1">Velocidade Máxima</div>
+                </button>
+                <button class="btn-char-card p-3 bg-zinc-900 border-2 border-transparent opacity-60 rounded-2xl transition text-center" data-char="1">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500 mx-auto mb-2 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                    <div class="font-bold text-sm">BLINDADO</div>
+                    <div class="text-[10px] text-zinc-500 uppercase mt-1">Grip / Offroad</div>
+                </button>
+                <button class="btn-char-card p-3 bg-zinc-900 border-2 border-transparent opacity-60 rounded-2xl transition text-center" data-char="2">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500 mx-auto mb-2 shadow-[0_0_10px_rgba(147,51,234,0.5)]"></div>
+                    <div class="font-bold text-sm">FANTASMA</div>
+                    <div class="text-[10px] text-zinc-500 uppercase mt-1">Curvas Ágeis</div>
+                </button>
+            </div>
+
+            <div class="flex-1 bg-black/50 border border-zinc-900 rounded-2xl p-4 flex flex-col mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="text-xs uppercase text-zinc-400 font-bold font-hud tracking-wider">Grid de Largada Oficial (6 Vagas)</h4>
+                    <span class="text-xs text-zinc-500 font-bold">Vagas Restantes completadas por Bots</span>
+                </div>
+                <ul id="lobby-racers-list" class="space-y-2 flex-1 overflow-y-auto pr-1 text-sm">
+                    </ul>
+            </div>
+
+            <button id="btn-lobby-start" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 py-4 rounded-xl font-hud font-black text-xl tracking-wide shadow-lg active:scale-95 transition">
+                CONFIRMAR E LARGAR 3D
+            </button>
+        </div>
+
+        <div id="lobby-chat-panel" class="w-full md:w-80 bg-zinc-900/60 p-6 flex flex-col h-1/2 md:h-full border-t md:border-t-0 md:border-l border-zinc-900">
+            <h4 class="font-hud text-xs uppercase tracking-widest text-zinc-400 mb-3 font-bold">Chat Rádio do Box</h4>
+            <div id="lobby-chat-messages" class="flex-1 bg-black/40 rounded-xl p-3 border border-zinc-950 overflow-y-auto space-y-2 text-xs font-sans">
+                </div>
+            <form id="lobby-chat-form" class="flex gap-2 mt-3">
+                <input id="lobby-chat-input" type="text" autocomplete="off" placeholder="Mensagem para a sala..." class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-fuchsia-500">
+                <button type="submit" class="bg-fuchsia-600 hover:bg-fuchsia-500 px-3 py-2 rounded-xl text-xs font-bold transition">ENVIAR</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="scr-game" class="absolute inset-0 z-10 hidden">
+        <div id="game-render-viewport" class="w-full h-full absolute inset-0 z-1"></div>
+
+        <div class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6">
+            <div class="flex justify-between items-start w-full">
+                <div class="space-y-2">
+                    <div class="bg-black/80 border border-zinc-800 px-4 py-2 rounded-xl text-white font-hud text-sm flex items-center gap-3 shadow-lg">
+                        <span class="text-zinc-500 font-bold">VOLTA</span>
+                        <span id="hud-lap" class="text-cyan-400 font-black text-lg">1 / 3</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <div id="hud-item-box" class="w-16 h-16 bg-black/90 border-2 border-zinc-700 rounded-2xl flex items-center justify-center text-3xl shadow-2xl transition-all duration-300">
+                            ❓
+                        </div>
+                        <div class="bg-black/60 px-2 py-1 rounded text-[10px] text-zinc-400 font-sans uppercase tracking-widest">ESPAÇO / BOTÃO MÓVEL PARA LANÇAR</div>
+                    </div>
+                </div>
+
+                <div class="w-24 h-24 md:w-32 md:h-32 bg-black/80 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
+                    <canvas id="hud-minimap" width="128" height="128" class="w-full h-full"></canvas>
+                </div>
+            </div>
+
+            <div id="hud-status-alert" class="self-center bg-red-600/90 text-white font-hud font-black px-6 py-3 rounded-2xl border-2 border-white shadow-2xl text-center hidden uppercase tracking-widest animate-pulse">
+                💥 DERAPOU! PERDEU O CONTROLE!
+            </div>
+
+            <div id="hud-countdown" class="absolute inset-0 flex items-center justify-center hidden">
+                <span id="hud-countdown-text" class="font-hud text-8xl md:text-9xl font-black text-yellow-400 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] animate-scale">3</span>
+            </div>
+
+            <div id="hud-touch-panel" class="w-full flex justify-between items-end pointer-events-none md:hidden">
+                <div class="flex gap-2 pointer-events-auto">
+                    <div id="touch-left" class="touch-btn w-16 h-16">
+                        <svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                    </div>
+                    <div id="touch-right" class="touch-btn w-16 h-16">
+                        <svg width="32" height="32" fill="white" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4 pointer-events-auto">
+                    <div id="touch-item" class="touch-btn w-14 h-14 bg-yellow-600/40 border-yellow-500 text-xl">🎁</div>
+                    <div id="touch-brake" class="touch-btn w-14 h-14 bg-red-600/40 border-red-500 text-xs font-bold">RÉ</div>
+                    <div id="touch-gas" class="touch-btn w-20 h-20 bg-emerald-600/50 border-emerald-400 font-hud font-bold text-sm tracking-tighter">ACELERA</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scr-results" class="absolute inset-0 z-40 bg-black/95 flex flex-col items-center justify-center backdrop-blur-md hidden p-4">
+            <div class="w-full max-w-md bg-zinc-900 border-2 border-yellow-500 rounded-3xl p-6 shadow-2xl flex flex-col">
+                <h2 class="font-hud text-3xl font-black text-center text-yellow-400 tracking-tight mb-1">FIM DA PROVA</h2>
+                <p class="text-center text-zinc-500 text-xs uppercase tracking-widest mb-6 font-bold">Grid Final de Classificação</p>
+                
+                <div id="results-leaderboard-container" class="space-y-2 flex-1 overflow-y-auto mb-6 pr-1">
+                    </div>
+
+                <button id="btn-results-finish" class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 py-4 rounded-xl font-hud font-bold tracking-wide transition active:scale-95 shadow-lg text-center">
+                    VOLTAR AO MENU PRINCIPAL
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const statusTxt = document.getElementById('status-txt');
+        // --- GERENCIADOR DE ESTADOS GLOBAIS ---
+        let currentScreen = document.getElementById('scr-intro');
+        let sessionUser = null;
+        let activeRoom = { isMulti: false, code: 'LOCAL', mapId: 0, diff: 'medium', allowChat: true };
+        let gameActive = false, isCountdownActive = false, raceStartTimestamp = 0;
+        
+        const CHARACTERS = [
+            { id: 0, name: "Faísca", color: "#ef4444", colorHex: 0xef4444, maxSpeed: 19, accel: 0.28, turnSpeed: 0.05, grip: 0.92 },
+            { id: 1, name: "Blindado", color: "#10b981", colorHex: 0x10b981, maxSpeed: 15, accel: 0.42, turnSpeed: 0.06, grip: 0.98 },
+            { id: 2, name: "Fantasma", color: "#a855f7", colorHex: 0xa855f7, maxSpeed: 17, accel: 0.33, turnSpeed: 0.08, grip: 0.94 }
+        ];
 
-        let peer;
-        let conn;
-        let isHost = false;
-        let gameStarted = false;
+        const MAPS = [
+            { name: "Deserto Cinder", theme: 'desert', bgColor: 0xdfbc8a, width: 10, height: 10, start: {x:4, z:8, rot:0}, grid: [
+                [2,2,2,2,2,2,2,2,2,2], [2,1,1,1,1,1,1,7,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,7,0,2,2,2,2,0,7,2],
+                [2,1,0,2,2,2,2,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,1,3,1,1,1,1,1,2], [2,2,2,2,2,2,2,2,2,2]
+            ]},
+            { name: "Pista do Vulcão", theme: 'volcano', bgColor: 0x1a0805, width: 10, height: 10, start: {x:2, z:8, rot:0}, grid: [
+                [2,2,2,2,2,2,2,2,2,2], [2,1,1,7,1,1,1,1,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,0,1,1,1,1,0,1,2], [2,1,0,1,2,2,1,0,7,2],
+                [2,7,0,1,2,2,1,0,1,2], [2,1,0,1,1,1,1,0,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,1,3,1,1,1,1,1,2], [2,2,2,2,2,2,2,2,2,2]
+            ]},
+            { name: "Estrada Rainbow", theme: 'space', bgColor: 0x02020a, width: 10, height: 10, start: {x:5, z:8, rot:0}, grid: [
+                [2,2,2,2,2,2,2,2,2,2], [2,1,1,1,7,1,1,1,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,1,0,2,2,2,2,0,1,2],
+                [2,1,0,2,2,2,2,0,1,2], [2,1,0,2,2,2,2,0,1,2], [2,1,0,0,0,0,0,0,1,2], [2,1,1,1,1,3,1,7,1,2], [2,2,2,2,2,2,2,2,2,2]
+            ]}
+        ];
 
-        // Configuração física e visual estilo SNES (Pseudo-3D / Projeção de Linhas)
-        const keys = {};
-        const player = { x: 0, y: 100, speed: 0, angle: 0, color: '#ff3333', name: 'Você' };
-        const rival = { x: 20, y: 120, speed: 0, angle: 0, color: '#3333ff', name: 'Rival' };
+        const ITEMS_POOL = ['rocket', 'banana', 'shield'];
 
-        // Inicializa o PeerJS para gerar a sala
-        peer = new Peer();
+        // --- CORE ENGINE VARIABLES ---
+        let scene, camera, renderer, clock;
+        let viewWidth = window.innerWidth, viewHeight = window.innerHeight;
+        let trackMeshes = [], wallMeshes = [], boxMeshes = [], projectileMeshes = [];
+        let animationFrameId = null;
 
-        peer.on('open', (id) => {
-            document.getElementById('my-id-view').innerText = id;
-            statusTxt.innerText = "Pronto! Crie uma sala ou entre em uma.";
-        });
+        // Entidades da Corrida (Até 6 Jogadores)
+        let localRacer = { x: 0, z: 0, angle: 0, speed: 0, lap: 1, checkpoint: 0, finished: false, time: 0, item: null, stunUntil: 0, charId: 0, activeShield: false };
+        let racersGrid = []; // Array contendo localRacer + oponentes (Bots ou emulados)
 
-        // Caso você seja o HOST e alguém se conecte a você
-        peer.on('connection', (connection) => {
-            conn = connection;
-            isHost = true;
-            setupChat();
-        });
+        // Controles de Input Sincronizados
+        const inputState = { gas: 0, brake: 0, left: 0, right: 0, fire: 0 };
+        const keyMap = { w: 'gas', ArrowUp: 'gas', s: 'brake', ArrowDown: 'brake', a: 'left', ArrowLeft: 'left', d: 'right', ArrowRight: 'right', ' ': 'fire' };
 
-        // Caso você seja o CLIENTE e queira se conectar ao Host
-        function connectToHost() {
-            const hostId = document.getElementById('peer-id-input').value.trim();
-            if(!hostId) return alert("Digite um ID válido!");
+        function navigateTo(targetElement) {
+            currentScreen.classList.add('hidden');
+            targetElement.classList.remove('hidden');
+            currentScreen = targetElement;
+        }
+
+        // --- SISTEMA DE AUTENTICAÇÃO PERSISTENTE ---
+        function checkPersistentAuth() {
+            const saved = localStorage.getItem('bv_kart_profile');
+            if (saved) {
+                sessionUser = JSON.parse(saved);
+                document.getElementById('menu-profile-name').textContent = sessionUser.username;
+                document.getElementById('stat-wins').textContent = sessionUser.wins || 0;
+                document.getElementById('stat-points').textContent = (sessionUser.wins * 100) + " PTS";
+                navigateTo(document.getElementById('scr-menu'));
+            } else {
+                navigateTo(document.getElementById('scr-auth'));
+            }
+        }
+
+        document.getElementById('btn-auth-confirm').onclick = () => {
+            const user = document.getElementById('auth-user').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
+            const err = document.getElementById('auth-error');
+
+            if (user.length < 3 || pass.length < 4) {
+                err.textContent = "Apelido (mínimo 3 letras) e senha (mínimo 4 caracteres) inválidos!";
+                err.classList.remove('hidden');
+                return;
+            }
+            err.classList.add('hidden');
             
-            statusTxt.innerText = "Conectando...";
-            conn = peer.connect(hostId);
-            isHost = false;
-            setupChat();
+            sessionUser = { username: user, wins: 0 };
+            localStorage.setItem('bv_kart_profile', JSON.stringify(sessionUser));
+            document.getElementById('menu-profile-name').textContent = user;
+            navigateTo(document.getElementById('scr-menu'));
+        };
+
+        document.getElementById('btn-logout').onclick = () => {
+            localStorage.removeItem('bv_kart_profile');
+            document.getElementById('auth-user').value = '';
+            document.getElementById('auth-pass').value = '';
+            navigateTo(document.getElementById('scr-auth'));
+        };
+
+        // --- GERENCIAMENTO DE ROTAS / MENUS ---
+        document.getElementById('btn-menu-solo').onclick = () => {
+            activeRoom.isMulti = false;
+            activeRoom.code = 'LOCAL';
+            activeRoom.mapId = Math.floor(Math.random() * MAPS.length);
+            activeRoom.diff = 'medium';
+            activeRoom.allowChat = false;
+            setupLobbyUI();
+        };
+
+        document.getElementById('btn-menu-multi').onclick = () => {
+            navigateTo(document.getElementById('scr-room-manage'));
+        };
+
+        document.getElementById('btn-room-create').onclick = () => {
+            activeRoom.isMulti = true;
+            activeRoom.code = Math.random().toString(36).substring(2, 6).toUpperCase();
+            activeRoom.mapId = parseInt(document.getElementById('cfg-map').value);
+            activeRoom.diff = document.getElementById('cfg-diff').value;
+            activeRoom.allowChat = document.getElementById('cfg-chat').value === 'yes';
+            setupLobbyUI();
+        };
+
+        document.getElementById('btn-room-join').onclick = () => {
+            const code = document.getElementById('input-room-code').value.trim().toUpperCase();
+            if (code.length !== 4) return alert("Código precisa ter exatamente 4 dígitos!");
+            activeRoom.isMulti = true;
+            activeRoom.code = code;
+            activeRoom.mapId = Math.floor(Math.random() * MAPS.length);
+            activeRoom.diff = 'hard';
+            activeRoom.allowChat = true;
+            setupLobbyUI();
+        };
+
+        document.querySelectorAll('.btn-back').forEach(btn => {
+            btn.onclick = () => {
+                if (currentScreen === document.getElementById('scr-room-manage') || currentScreen === document.getElementById('scr-lobby')) {
+                    navigateTo(document.getElementById('scr-menu'));
+                }
+            };
+        });
+
+        // --- EVENTO SELEÇÃO DE HERO / PILOTO ---
+        document.querySelectorAll('.btn-char-card').forEach((card, index) => {
+            card.onclick = () => {
+                document.querySelectorAll('.btn-char-card').forEach(c => {
+                    c.classList.replace('border-cyan-500', 'border-transparent');
+                    c.classList.add('opacity-60');
+                });
+                card.classList.replace('border-transparent', 'border-cyan-500');
+                card.classList.remove('opacity-60');
+                localRacer.charId = index;
+                renderLobbyRacersGridList();
+            };
+        });
+
+        function setupLobbyUI() {
+            navigateTo(document.getElementById('scr-lobby'));
+            document.getElementById('lobby-code-display').textContent = activeRoom.code;
+            document.getElementById('lobby-chat-panel').style.display = activeRoom.allowChat ? 'flex' : 'none';
+            renderLobbyRacersGridList();
+            
+            if (activeRoom.allowChat) {
+                const chatBox = document.getElementById('lobby-chat-messages');
+                chatBox.innerHTML = `<div class="text-zinc-500 italic text-center">[Rádio do Box de Corrida Ativado - Sala ${activeRoom.code}]</div>`;
+            }
         }
 
-        // Configura o canal de dados em tempo real entre as salas
-        function setupChat() {
-            conn.on('open', () => {
-                statusTxt.innerText = "Conectado! Iniciando motores...";
-                setTimeout(() => {
-                    document.getElementById('lobby').style.display = 'none';
-                    document.getElementById('game-container').style.display = 'block';
-                    gameStarted = true;
-                    initGame();
-                }, 1000);
+        function renderLobbyRacersGridList() {
+            const listContainer = document.getElementById('lobby-racers-list');
+            listContainer.innerHTML = '';
+
+            // Configurando Estrutura Dinâmica com Exatamente 6 Corredores Obrigatórios
+            racersGrid = [
+                { isBot: false, name: sessionUser.username + " (Você)", charId: localRacer.charId, id: 'player_local' }
+            ];
+
+            // Nomes de pilotos simulados em tempo real na rede/bots para completar o grid de 6 vagas
+            const poolNames = ["Alpha_Bot", "Vortex3D", "CyberPiloto", "NeonRacer", "Shadow_AI", "HyperKart", "TurboX"];
+            let nameIdx = 0;
+            while(racersGrid.length < 6) {
+                racersGrid.push({
+                    isBot: true,
+                    name: (activeRoom.isMulti ? "[Rede/Bot] " : "[Bot] ") + poolNames[nameIdx++ % poolNames.length],
+                    charId: Math.floor(Math.random() * 3),
+                    id: 'bot_' + racersGrid.length
+                });
+            }
+
+            racersGrid.forEach(r => {
+                const charData = CHARACTERS[r.charId];
+                listContainer.innerHTML += `
+                    <li class="flex items-center justify-between p-3 bg-zinc-900/80 rounded-xl border border-zinc-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 rounded-full" style="background-color: ${charData.color}"></div>
+                            <span class="font-bold ${!r.isBot ? 'text-cyan-400' : 'text-zinc-300'}">${r.name}</span>
+                        </div>
+                        <span class="text-xs font-hud tracking-tighter uppercase px-2 py-0.5 rounded bg-zinc-950 text-zinc-500">${charData.name}</span>
+                    </li>
+                `;
+            });
+        }
+
+        // Chat do Lobby
+        document.getElementById('lobby-chat-form').onsubmit = (e) => {
+            e.preventDefault();
+            const input = document.getElementById('lobby-chat-input');
+            const txt = input.value.trim();
+            if(!txt) return;
+            const chatBox = document.getElementById('lobby-chat-messages');
+            chatBox.innerHTML += `<div><span class="text-cyan-400 font-bold">${sessionUser.username}:</span> <span class="text-zinc-200">${txt}</span></div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            input.value = '';
+        };
+
+
+        // --- ENGINE GRÁFICO 3D (THREE.JS HIGH-END CORE) ---
+        const TILE_SIZE = 60;
+
+        function build3DEngineWorld() {
+            const mapData = MAPS[activeRoom.mapId];
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(mapData.bgColor);
+            scene.fog = new THREE.FogExp2(mapData.bgColor, 0.003);
+
+            camera = new THREE.PerspectiveCamera(65, viewWidth / viewHeight, 0.1, 1500);
+            clock = new THREE.Clock();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(viewWidth, viewHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            document.getElementById('game-render-viewport').appendChild(renderer.domElement);
+
+            // Iluminação Global Otimizada
+            const ambientLight = new THREE.AmbientLight(0xffffff, mapData.theme === 'space' ? 0.4 : 0.6);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            sunLight.position.set(150, 300, 100);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 1024;
+            sunLight.shadow.mapSize.height = 1024;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 800;
+            const sd = 250;
+            sunLight.shadow.camera.left = -sd; sunLight.shadow.camera.right = sd;
+            sunLight.shadow.camera.top = sd; sunLight.shadow.camera.bottom = -sd;
+            scene.add(sunLight);
+
+            // Geração da Malha da Pista Base 3D
+            const roadMat = new THREE.MeshStandardMaterial({ color: mapData.theme === 'space' ? 0x221144 : 0x2d2e33, roughness: 0.5, metalness: 0.2 });
+            const finishMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }); // Linha Chegada
+            const wallMat = new THREE.MeshStandardMaterial({ color: mapData.theme === 'volcano' ? 0x3d0a00 : mapData.theme === 'desert' ? 0x9c6633 : 0x00dfff, roughness: 0.6, emissive: mapData.theme === 'space' ? 0x0055ff : 0x000000 });
+
+            trackMeshes = []; wallMeshes = []; boxMeshes = []; projectileMeshes = [];
+
+            const grid = mapData.grid;
+            for(let z=0; z<mapData.height; z++) {
+                for(let x=0; x<mapData.width; x++) {
+                    const tile = grid[z][x];
+                    const px = x * TILE_SIZE - (mapData.width * TILE_SIZE)/2 + TILE_SIZE/2;
+                    const pz = z * TILE_SIZE - (mapData.height * TILE_SIZE)/2 + TILE_SIZE/2;
+
+                    if (tile === 1 || tile === 3 || tile === 7) {
+                        const geo = new THREE.BoxGeometry(TILE_SIZE, 0.5, TILE_SIZE);
+                        const mesh = new THREE.Mesh(geo, tile === 3 ? finishMat : roadMat);
+                        mesh.position.set(px, -0.25, pz);
+                        mesh.receiveShadow = true;
+                        scene.add(mesh);
+                        trackMeshes.push(mesh);
+
+                        // Caixa de Item Flutuante 3D Procedural
+                        if(tile === 7) {
+                            const bGeo = new THREE.BoxGeometry(4, 4, 4);
+                            const bMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, transparent: true, opacity: 0.7, emissive: 0xff5500 });
+                            const box = new THREE.Mesh(bGeo, bMat);
+                            box.position.set(px, 3, pz);
+                            box.castShadow = true;
+                            scene.add(box);
+                            boxMeshes.push({ mesh: box, originY: 3, rotSpeed: 0.03 + Math.random()*0.02, active: true, respawnAt: 0 });
+                        }
+                    } else if (tile === 2) {
+                        const wGeo = new THREE.BoxGeometry(TILE_SIZE, mapData.theme === 'space' ? 2 : 12, TILE_SIZE);
+                        const mesh = new THREE.Mesh(wGeo, wallMat);
+                        mesh.position.set(px, mapData.theme === 'space' ? 1 : 6, pz);
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                        scene.add(mesh);
+                        wallMeshes.push(mesh);
+                    }
+                }
+            }
+        }
+
+        // Fábrica de Modelagem de Karts em Geometria Pura 3D Otimizada
+        function create3DKartModel(colorHex) {
+            const group = new THREE.Group();
+            
+            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.2, metalness: 0.7 });
+            const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.9, roughness: 0.1 });
+
+            // Chassi Principal
+            const chassi = new THREE.Mesh(new THREE.BoxGeometry(3, 0.6, 5), bodyMat);
+            chassi.position.y = 0.5;
+            chassi.castShadow = true;
+            chassi.receiveShadow = true;
+            group.add(chassi);
+
+            // Aerofólio Traseiro
+            const wing = new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 1.2), bodyMat);
+            wing.position.set(0, 1.6, -2.2);
+            wing.castShadow = true;
+            group.add(wing);
+
+            const wingSupportL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.2), metalMat);
+            wingSupportL.position.set(-1.4, 1.0, -2.2);
+            group.add(wingSupportL);
+            const wingSupportR = wingSupportL.clone();
+            wingSupportR.position.x = 1.4;
+            group.add(wingSupportR);
+
+            // Assento do Piloto
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.8), blackMat);
+            seat.position.set(0, 1.1, -0.6);
+            group.add(seat);
+
+            // Rodas do Kart
+            const wheelGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.6, 12);
+            wheelGeo.rotateZ(Math.PI / 2);
+            const wOffsets = [
+                {x: -1.8, z: 1.6}, {x: 1.8, z: 1.6},
+                {x: -1.8, z: -1.6}, {x: 1.8, z: -1.6}
+            ];
+            
+            const wheelMeshes = [];
+            wOffsets.forEach(offset => {
+                const wheel = new THREE.Mesh(wheelGeo, blackMat);
+                wheel.position.set(offset.x, 0.6, offset.z);
+                wheel.castShadow = true;
+                group.add(wheel);
+                wheelMeshes.push(wheel);
             });
 
-            // Recebe os dados de posição do outro jogador na sala
-            conn.on('data', (data) => {
-                rival.x = data.x;
-                rival.y = data.y;
-                rival.angle = data.angle;
+            scene.add(group);
+            return { rootGroup: group, wheels: wheelMeshes };
+        }
+
+        // --- SISTEMA INICIALIZADOR DA PARTIDA (CONTAGEM DE LARGADA) ---
+        document.getElementById('btn-lobby-start').onclick = () => {
+            navigateTo(document.getElementById('scr-game'));
+            build3DEngineWorld();
+
+            const mapData = MAPS[activeRoom.mapId];
+            const startX = mapData.start.x * TILE_SIZE - (mapData.width * TILE_SIZE)/2 + TILE_SIZE/2;
+            const startZ = mapData.start.z * TILE_SIZE - (mapData.height * TILE_SIZE)/2 + TILE_SIZE/2;
+
+            // Instanciar Entidades Físicas Gráficas dos Corredores do Grid Sincronizado
+            racersGrid.forEach((r, idx) => {
+                const models = create3DKartModel(CHARACTERS[r.charId].colorHex);
+                r.rootGroup = models.rootGroup;
+                r.wheels = models.wheels;
+
+                // Alinhamento em fila indiana dupla no grid de largada
+                r.x = startX + (idx % 2 === 0 ? -4 : 4);
+                r.z = startZ - (Math.floor(idx / 2) * 8);
+                r.angle = mapData.start.rot;
+                r.speed = 0;
+                r.lap = 1;
+                r.checkpoint = 0;
+                r.finished = false;
+                r.stunUntil = 0;
+                r.activeShield = false;
+
+                r.rootGroup.position.set(r.x, 0, r.z);
+                r.rootGroup.rotation.y = r.angle;
             });
+
+            // Reseta Estado do Jogador Local Referencial
+            localRacer = racersGrid[0];
+            localRacer.item = null;
+            updateItemBoxHUD();
+            document.getElementById('hud-lap').textContent = `1 / 3`;
+
+            // Ativar Sequência Animada de Contagem Regressiva Arcade
+            isCountdownActive = true;
+            gameActive = true;
+            
+            const countBox = document.getElementById('hud-countdown');
+            const countTxt = document.getElementById('hud-countdown-text');
+            countBox.classList.remove('hidden');
+
+            let countStep = 3;
+            countTxt.textContent = countStep;
+            
+            const interval = setInterval(() => {
+                countStep--;
+                if(countStep > 0) {
+                    countTxt.textContent = countStep;
+                } else if(countStep === 0) {
+                    countTxt.textContent = "VAI!";
+                    countTxt.classList.replace('text-yellow-400', 'text-emerald-400');
+                    isCountdownActive = false;
+                    raceStartTimestamp = Date.now();
+                } else {
+                    clearInterval(interval);
+                    countBox.classList.add('hidden');
+                    countTxt.classList.replace('text-emerald-400', 'text-yellow-400');
+                }
+            }, 1000);
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            clock.getDelta(); // Reset clock
+            loopEngineGameplay();
+        };
+
+
+        // --- LOOP DE SIMULAÇÃO FÍSICA E RENDER (60 FPS) ---
+        function loopEngineGameplay() {
+            if (!gameActive) return;
+            animationFrameId = requestAnimationFrame(loopEngineGameplay);
+
+            const dt = clock.getDelta();
+            const now = Date.now();
+
+            // 1. Processamento da Física do Jogador Humano Local
+            if (!isCountdownActive && !localRacer.finished) {
+                if (now < localRacer.stunUntil) {
+                    localRacer.speed = 0;
+                    localRacer.rootGroup.rotation.y += 0.3; // Animação Girando Tonto
+                    document.getElementById('hud-status-alert').classList.remove('hidden');
+                } else {
+                    document.getElementById('hud-status-alert').classList.add('hidden');
+                    const spec = CHARACTERS[localRacer.charId];
+
+                    // Tratamento Aceleração / Atrito
+                    if (inputState.gas) {
+                        localRacer.speed += spec.accel;
+                        if (localRacer.speed > spec.maxSpeed) localRacer.speed = spec.maxSpeed;
+                    } else if (inputState.brake) {
+                        localRacer.speed -= spec.accel * 1.5;
+                        if (localRacer.speed < -spec.maxSpeed / 2) localRacer.speed = -spec.maxSpeed / 2;
+                    } else {
+                        localRacer.speed *= 0.95; // Fricção natural da pista
+                    }
+
+                    // Direção Dinâmica
+                    if (Math.abs(localRacer.speed) > 0.5) {
+                        const turnFactor = spec.turnSpeed * (localRacer.speed > 0 ? 1 : -1);
+                        if (inputState.left) localRacer.angle += turnFactor;
+                        if (inputState.right) localRacer.angle -= turnFactor;
+                    }
+
+                    // Avanço Vetorial e Colisão com Paredes
+                    let nx = localRacer.x + Math.sin(localRacer.angle) * localRacer.speed * 0.15;
+                    let nz = localRacer.z + Math.cos(localRacer.angle) * localRacer.speed * 0.15;
+
+                    if (checkWall3DCollision(nx, nz)) {
+                        localRacer.speed = -localRacer.speed * 0.4; // Rebote Elástico
+                    } else {
+                        localRacer.x = nx;
+                        localRacer.z = nz;
+                    }
+
+                    localRacer.rootGroup.position.set(localRacer.x, 0, localRacer.z);
+                    localRacer.rootGroup.rotation.set(0, localRacer.angle, 0);
+                    
+                    // Rotacionar Calotas das Rodas Baseado na Marcha
+                    localRacer.wheels.forEach(w => w.rotation.x += localRacer.speed * 0.05);
+
+                    checkTrackCheckpointsSystem(localRacer);
+                }
+
+                // Disparar Item Coletado
+                if (inputState.fire && localRacer.item) {
+                    executeRacerItemTrigger(localRacer);
+                    inputState.fire = 0;
+                }
+            }
+
+            // 2. Processamento da Inteligência Artificial dos 5 Bots do Grid
+            racersGrid.forEach(r => {
+                if (!r.isBot || isCountdownActive || r.finished) return;
+
+                if (now < r.stunUntil) {
+                    r.rootGroup.rotation.y += 0.2;
+                    return;
+                }
+
+                const spec = CHARACTERS[r.charId];
+                // Caminho de Inteligência Artificial baseado na matriz da pista atual
+                const mapData = MAPS[activeRoom.mapId];
+                // Nó alvo simplificado: calcular o centro geométrico aproximado da pista mais próxima
+                // Bots miram dinamicamente no fluxo ideal da pista para contornar paredes
+                let targetX = 0, targetZ = 0, bestDist = 999999;
+                
+                // Procurar bloco de pista válido para perseguição por nós próximos
+                for(let z=0; z<mapData.height; z++) {
+                    for(let x=0; x<mapData.width; x++) {
+                        if(mapData.grid[z][x] === 1 || mapData.grid[z][x] === 3) {
+                            const blockX = x * TILE_SIZE - (mapData.width * TILE_SIZE)/2 + TILE_SIZE/2;
+                            const blockZ = z * TILE_SIZE - (mapData.height * TILE_SIZE)/2 + TILE_SIZE/2;
+                            const d = Math.hypot(blockX - r.x, blockZ - r.z);
+                            if (d > 10 && d < bestDist) {
+                                // Ajuste de dificuldade na perseguição e IA
+                                if(activeRoom.diff === 'easy' && Math.random() > 0.4) continue;
+                                bestDist = d; targetX = blockX; targetZ = blockZ;
+                            }
+                        }
+                    }
+                }
+
+                // Cálculo angular do volante da IA
+                let angleToTarget = Math.atan2(targetX - r.x, targetZ - r.z);
+                let diff = angleToTarget - r.angle;
+                while(diff < -Math.PI) diff += Math.PI*2;
+                while(diff > Math.PI) diff -= Math.PI*2;
+
+                r.angle += diff * 0.05;
+                
+                let botMaxSpeed = spec.maxSpeed * (activeRoom.diff === 'easy' ? 0.65 : activeRoom.diff === 'medium' ? 0.82 : 0.98);
+                r.speed += spec.accel * 0.8;
+                if (r.speed > botMaxSpeed) r.speed = botMaxSpeed;
+
+                r.x += Math.sin(r.angle) * r.speed * 0.15;
+                r.z += Math.cos(r.angle) * r.speed * 0.15;
+
+                r.rootGroup.position.set(r.x, 0, r.z);
+                r.rootGroup.rotation.set(0, r.angle, 0);
+                r.wheels.forEach(w => w.rotation.x += r.speed * 0.05);
+
+                checkTrackCheckpointsSystem(r);
+
+                // Chance Randômica de Bots Usarem Itens caso passem pelas caixas
+                if(Math.random() < 0.003 && !r.item) {
+                    r.item = ITEMS_POOL[Math.floor(Math.random()*ITEMS_POOL.length)];
+                    executeRacerItemTrigger(r);
+                }
+            });
+
+            // 3. Processamento Mecânico de Objetos (Caixas e Projéteis 3D)
+            boxMeshes.forEach(box => {
+                if (box.active) {
+                    box.mesh.rotation.y += box.rotSpeed;
+                    box.mesh.position.y = box.originY + Math.sin(now / 200) * 0.2;
+
+                    // Colisão da Caixa de Item com o Jogador Local
+                    if (!localRacer.finished && Math.hypot(localRacer.x - box.mesh.position.x, localRacer.z - box.mesh.position.z) < 5) {
+                        box.active = false;
+                        box.mesh.visible = false;
+                        box.respawnAt = now + 4000; // 4 Segundos para reaparecer
+                        if (!localRacer.item) {
+                            localRacer.item = ITEMS_POOL[Math.floor(Math.random() * ITEMS_POOL.length)];
+                            updateItemBoxHUD();
+                        }
+                    }
+                } else if (now > box.respawnAt) {
+                    box.active = true;
+                    box.mesh.visible = true;
+                }
+            });
+
+            update3DProjectilesSystem(dt);
+
+            // 4. Mecânica da Câmera Cinemática em 3ª Pessoa Traseira
+            if(localRacer.rootGroup) {
+                const lookAtPos = new THREE.Vector3(localRacer.x, 1, localRacer.z);
+                const targetCamX = localRacer.x - Math.sin(localRacer.angle) * 18;
+                const targetCamZ = localRacer.z - Math.cos(localRacer.angle) * 18;
+                const targetCamY = 7;
+
+                // Suavização Cinematográfica (Lerp) para simulação de balanço por velocidade
+                camera.position.x += (targetCamX - camera.position.x) * 0.1;
+                camera.position.z += (targetCamZ - camera.position.z) * 0.1;
+                camera.position.y += (targetCamY - camera.position.y) * 0.1;
+                camera.lookAt(lookAtPos);
+            }
+
+            renderer.render(scene, camera);
+            drawHUDMinimap2D();
         }
 
-        // Captura do Teclado
-        window.addEventListener('keydown', e => keys[e.key] = true);
-        window.addEventListener('keyup', e => keys[e.key] = false);
+        // --- SISTEMA DE VERIFICAÇÃO DE CHECKPOINTS E CHEGADA ---
+        function checkTrackCheckpointsSystem(r) {
+            const mapData = MAPS[activeRoom.mapId];
+            const tx = Math.floor((r.x + (mapData.width * TILE_SIZE)/2) / TILE_SIZE);
+            const tz = Math.floor((r.z + (mapData.height * TILE_SIZE)/2) / TILE_SIZE);
 
-        function initGame() {
-            document.getElementById('room-role').innerText = isHost ? "ROLE: HOST" : "ROLE: CLIENTE";
-            gameLoop();
+            if (tx < 0 || tz < 0 || tx >= mapData.width || tz >= mapData.height) return;
+            const currentTile = mapData.grid[tz][tx];
+
+            // Mecânica Simples de 2 Checkpoints Centrais para Prevenir Trapaças de Atalho
+            if (currentTile === 7 && r.checkpoint === 0) r.checkpoint = 1;
+            if (currentTile === 1 && tx === Math.floor(mapData.width/2) && r.checkpoint === 1) r.checkpoint = 2;
+
+            if (currentTile === 3 && r.checkpoint === 2) {
+                r.checkpoint = 0;
+                r.lap++;
+                if (r.id === 'player_local') document.getElementById('hud-lap').textContent = `${r.lap > 3 ? 3 : r.lap} / 3`;
+
+                if (r.lap > 3) {
+                    r.finished = true;
+                    r.time = Date.now() - raceStartTimestamp;
+                    if (r.id === 'player_local') triggerRaceFinishView();
+                }
+            }
         }
 
-        // Loop principal do Jogo
-        function gameLoop() {
-            if (!gameStarted) return;
-
-            updatePhysics();
-            sendData();
-            drawGraphics();
-
-            requestAnimationFrame(gameLoop);
+        function checkWall3DCollision(x, z) {
+            const mapData = MAPS[activeRoom.mapId];
+            const tx = Math.floor((x + (mapData.width * TILE_SIZE)/2) / TILE_SIZE);
+            const tz = Math.floor((z + (mapData.height * TILE_SIZE)/2) / TILE_SIZE);
+            
+            if (tx < 0 || tz < 0 || tx >= mapData.width || tz >= mapData.height) return true;
+            return mapData.grid[tz][tx] === 2; // Bloqueio de Colisão se for Parede
         }
 
-        function updatePhysics() {
-            // Controles do jogador local
-            if (keys['w'] || keys['ArrowUp']) player.speed = Math.min(player.speed + 0.1, 4);
-            else if (keys['s'] || keys['ArrowDown']) player.speed = Math.max(player.speed - 0.1, -2);
-            else player.speed *= 0.95;
-
-            if (keys['a'] || keys['ArrowLeft']) player.angle -= 0.04;
-            if (keys['d'] || keys['ArrowRight']) player.angle += 0.04;
-
-            // Movimento baseado na direção
-            player.x += Math.sin(player.angle) * player.speed;
-            player.y -= Math.cos(player.angle) * player.speed;
+        // --- GESTÃO LOGÍSTICA DE ITENS ARMAMENTOS 3D ---
+        function updateItemBoxHUD() {
+            const el = document.getElementById('hud-item-box');
+            if(!localRacer.item) { el.textContent = '❓'; el.style.borderColor = '#3f3f46'; return; }
+            if(localRacer.item === 'rocket') el.textContent = '🚀';
+            if(localRacer.item === 'banana') el.textContent = '🍌';
+            if(localRacer.item === 'shield') el.textContent = '🛡️';
+            el.style.borderColor = '#eab308';
         }
 
-        function sendData() {
-            // Envia sua posição para o outro jogador na sala
-            if (conn && conn.open) {
-                conn.send({
-                    x: player.x,
-                    y: player.y,
-                    angle: player.angle
+        function executeRacerItemTrigger(r) {
+            const type = r.item;
+            r.item = null;
+            if (r.id === 'player_local') updateItemBoxHUD();
+
+            if (type === 'shield') {
+                r.activeShield = true;
+                // Escudo visual: esfera brilhante em torno do Kart
+                const sGeo = new THREE.SphereGeometry(3, 8, 8);
+                const sMat = new THREE.MeshBasicMaterial({ color: 0x00a8ff, wireframe: true, transparent: true, opacity: 0.3 });
+                const sMesh = new THREE.Mesh(sGeo, sMat);
+                r.rootGroup.add(sMesh);
+                setTimeout(() => { r.activeShield = false; r.rootGroup.remove(sMesh); }, 6000);
+            } 
+            else if (type === 'rocket') {
+                // Instanciação de Míssil Teleguiado Direcional 3D
+                const pGeo = new THREE.CylinderGeometry(0.4, 0.4, 2, 8);
+                pGeo.rotateX(Math.PI / 2);
+                const pMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
+                const mesh = new THREE.Mesh(pGeo, pMat);
+                mesh.position.set(r.x, 0.8, r.z);
+                scene.add(mesh);
+
+                projectileMeshes.push({
+                    type: 'rocket', mesh: mesh, ownerId: r.id,
+                    x: r.x, z: r.z, angle: r.angle, speed: 40, life: 3.0
+                });
+            }
+            else if (type === 'banana') {
+                // Casca Obstáculo estático no chão da pista
+                const pGeo = new THREE.BoxGeometry(1.5, 0.4, 1.5);
+                const pMat = new THREE.MeshStandardMaterial({ color: 0xffea00, roughness: 0.2 });
+                const mesh = new THREE.Mesh(pGeo, pMat);
+                // Coloca um pouco atrás do carro
+                const bx = r.x - Math.sin(r.angle) * 4;
+                const bz = r.z - Math.cos(r.angle) * 4;
+                mesh.position.set(bx, 0.2, bz);
+                scene.add(mesh);
+
+                projectileMeshes.push({
+                    type: 'banana', mesh: mesh, ownerId: r.id,
+                    x: bx, z: bz, angle: 0, speed: 0, life: 15.0
                 });
             }
         }
 
-        // Efeito Gráfico de Perspectiva SNES (Pseudo-3D)
-        function drawGraphics() {
-            // Limpa a tela (Céu azul do Mario Kart)
-            ctx.fillStyle = '#64b0ff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function update3DProjectilesSystem(dt) {
+            const now = Date.now();
+            for (let i = projectileMeshes.length - 1; i >= 0; i--) {
+                const p = projectileMeshes[i];
+                p.life -= dt;
 
-            const horizon = 100; // Linha do horizonte
+                if (p.type === 'rocket') {
+                    p.x += Math.sin(p.angle) * p.speed * dt * 8;
+                    p.z += Math.cos(p.angle) * p.speed * dt * 8;
+                    p.mesh.position.set(p.x, 0.8, p.z);
+                    p.mesh.rotation.y = p.angle;
+                }
 
-            // Renderiza o chão linha por linha mudando a escala para dar efeito de profundidade (Mode 7 Fake)
-            for (let screenY = horizon; screenY < canvas.height; screenY++) {
-                // Fator de perspectiva (linhas mais distantes são menores)
-                const distance = (screenY - horizon) / (canvas.height - horizon);
-                const perspectiveScale = 1 / distance;
+                // Avaliar Colisão contra Entidades do Grid de 6 Competidores
+                racersGrid.forEach(r => {
+                    if (r.finished || r.id === p.ownerId || now < r.stunUntil) return;
 
-                // Alterna cores para criar o efeito "zebrado" das pistas antigas
-                const isAlt = Math.floor((player.y + perspectiveScale * 20) % 40) < 20;
-                ctx.fillStyle = isAlt ? '#10aa10' : '#008800'; // Grama
-                ctx.fillRect(0, screenY, canvas.width, 1);
+                    const dist = Math.hypot(r.x - p.x, r.z - p.z);
+                    if (dist < 4.5) {
+                        p.life = -1; // Explodir projétil
+                        if (r.activeShield) {
+                            r.activeShield = false; // Escudo absorve impacto
+                        } else {
+                            r.stunUntil = now + (p.type === 'rocket' ? 2500 : 1500); // Tempo atordoado
+                        }
+                    }
+                });
 
-                // Desenha a Estrada Centralizada
-                const roadWidth = 160 * distance;
-                const roadX = (canvas.width / 2) - (roadWidth / 2) - (player.x * distance);
+                // Auto-destruição por tempo ou impacto com paredes externas
+                if (p.life <= 0 || checkWall3DCollision(p.x, p.z)) {
+                    scene.remove(p.mesh);
+                    projectileMeshes.splice(i, 1);
+                }
+            }
+        }
+
+        // --- EXIBIÇÃO DE PLACAR FINAL E PERSISTÊNCIA ---
+        function triggerRaceFinishView() {
+            gameActive = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            // Ordenação dos Resultados Reais da Corrida (Quem completou e tempo menor vence)
+            const leaderboard = [...racersGrid];
+            leaderboard.sort((a, b) => {
+                if (a.finished && b.finished) return a.time - b.time;
+                if (a.finished) return -1;
+                if (b.finished) return 1;
+                return b.lap - a.lap;
+            });
+
+            // Se o Humano Venceu a Corrida contra os 6, computar vitória na persistência
+            if (leaderboard[0].id === 'player_local') {
+                sessionUser.wins = (sessionUser.wins || 0) + 1;
+                localStorage.setItem('bv_kart_profile', JSON.stringify(sessionUser));
+                document.getElementById('stat-wins').textContent = sessionUser.wins;
+                document.getElementById('stat-points').textContent = (sessionUser.wins * 100) + " PTS";
+            }
+
+            const container = document.getElementById('results-leaderboard-container');
+            container.innerHTML = '';
+
+            leaderboard.forEach((r, idx) => {
+                const isMe = r.id === 'player_local';
+                const timeStr = r.finished ? `${(r.time / 1000).toFixed(2)}s` : "Não Concluiu";
+                container.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border-b border-zinc-800 ${isMe ? 'bg-yellow-500/10 rounded-xl' : ''}">
+                        <span class="font-hud font-bold ${isMe ? 'text-yellow-400' : 'text-zinc-300'}">${idx + 1}º - ${r.name}</span>
+                        <span class="text-xs text-zinc-500 font-mono">${timeStr}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('scr-results').classList.remove('hidden');
+        }
+
+        document.getElementById('btn-results-finish').onclick = () => {
+            document.getElementById('scr-results').classList.add('hidden');
+            
+            // Limpeza completa de alocação de memória gráfica WebGL do Three.js
+            if(scene) {
+                while(scene.children.length > 0){ 
+                    scene.remove(scene.children[0]); 
+                }
+            }
+            document.getElementById('game-render-viewport').innerHTML = '';
+            
+            navigateTo(document.getElementById('scr-menu'));
+        };
+
+        // --- RENDERIZADOR 2D DO MINIMAPA DO HUD ---
+        const miniCanvas = document.getElementById('hud-minimap');
+        const miniCtx = miniCanvas.getContext('2d');
+
+        function drawHUDMinimap2D() {
+            const mapData = MAPS[activeRoom.mapId];
+            miniCtx.clearRect(0,0,128,128);
+
+            const scaleX = 128 / (mapData.width * TILE_SIZE);
+            const scaleZ = 128 / (mapData.height * TILE_SIZE);
+
+            // Desenhar Traçado Cinza da Estrada
+            miniCtx.fillStyle = "rgba(40,40,50,0.7)";
+            for(let z=0; z<mapData.height; z++) {
+                for(let x=0; x<mapData.width; x++) {
+                    if (mapData.grid[z][x] === 1 || mapData.grid[z][x] === 3 || mapData.grid[z][x] === 7) {
+                        miniCtx.fillRect(x*TILE_SIZE*scaleX, z*TILE_SIZE*scaleZ, TILE_SIZE*scaleX+0.5, TILE_SIZE*scaleZ+0.5);
+                    }
+                }
+            }
+
+            // Marcar todos os 6 Competidores ativos na tela em tempo real
+            racersGrid.forEach(r => {
+                miniCtx.fillStyle = CHARACTERS[r.charId].color;
+                const cx = (r.x + (mapData.width*TILE_SIZE)/2) * scaleX;
+                const cz = (r.z + (mapData.height*TILE_SIZE)/2) * scaleZ;
+                miniCtx.beginPath();
+                miniCtx.arc(cx, cz, r.id === 'player_local' ? 3.5 : 2.5, 0, Math.PI*2);
+                miniCtx.fill();
                 
-                ctx.fillStyle = isAlt ? '#444' : '#555'; // Asfalto
-                ctx.fillRect(roadX, screenY, roadWidth, 1);
-
-                // Bordas da pista (Linha vermelha e branca)
-                ctx.fillStyle = isAlt ? '#fff' : '#f00';
-                ctx.fillRect(roadX - (10 * distance), screenY, 10 * distance, 1);
-                ctx.fillRect(roadX + roadWidth, screenY, 10 * distance, 1);
-            }
-
-            // Renderiza os Karts na tela baseados na distância relativa
-            drawSprite(rival, player);
-            drawSprite(player, player); // Desenha a si mesmo na tela sempre à frente
-
-            // Atualiza Ranking Simples por Posição Y
-            const leaderboard = document.getElementById('rank-board');
-            if (player.y < rival.y) {
-                leaderboard.innerHTML = `1° - Você<br>2° - Rival`;
-            } else {
-                leaderboard.innerHTML = `1° - Rival<br>2° - Você`;
-            }
+                if (r.id === 'player_local') {
+                    miniCtx.strokeStyle = '#fff';
+                    miniCtx.lineWidth = 1;
+                    miniCtx.stroke();
+                }
+            });
         }
 
-        // Renderiza e escala os karts dependendo da posição na pista
-        function drawSprite(obj, pov) {
-            const relX = obj.x - pov.x;
-            const relY = pov.y - obj.y; // Inverte eixo Y na tela
+        // --- ESCUTAS E ARRANJOS DE ENTRADAS DE TECLADO / DESKTOP ---
+        window.addEventListener('keydown', (e) => {
+            if(keyMap[e.key] !== undefined) inputState[keyMap[e.key]] = 1;
+        });
+        window.addEventListener('keyup', (e) => {
+            if(keyMap[e.key] !== undefined) inputState[keyMap[e.key]] = 0;
+        });
 
-            if (relY <= 0) return; // Se estiver atrás da câmera, não desenha
-
-            const screenScale = 150 / relY;
-            const screenX = (canvas.width / 2) + (relX * screenScale) - (8 * screenScale);
-            const screenY = 100 + (relY * 2) - (12 * screenScale);
-
-            if(screenX < -50 || screenX > canvas.width + 50) return;
-
-            ctx.save();
-            ctx.translate(screenX, screenY);
-            ctx.scale(screenScale, screenScale);
-
-            // Desenha o corpo do Kart (Pixels Retrô)
-            ctx.fillStyle = obj.color;
-            ctx.fillRect(2, 4, 12, 8);
-            
-            // Rodas
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 8, 3, 4);
-            ctx.fillRect(13, 8, 3, 4);
-            
-            // Capacete
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(8, 3, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
+        // --- VINCULAÇÃO DE BOTÕES TOUCH MOBILE ---
+        function registerTouchInput(id, property) {
+            const el = document.getElementById(id);
+            if(!el) return;
+            const press = (e) => { e.preventDefault(); inputState[property] = 1; };
+            const release = (e) => { e.preventDefault(); inputState[property] = 0; };
+            el.addEventListener('touchstart', press, {passive:false});
+            el.addEventListener('touchend', release, {passive:false});
+            el.addEventListener('mousedown', press);
+            el.addEventListener('mouseup', release);
+            el.addEventListener('mouseleave', release);
         }
+        registerTouchInput('touch-left', 'left');
+        registerTouchInput('touch-right', 'right');
+        registerTouchInput('touch-gas', 'gas');
+        registerTouchInput('touch-brake', 'brake');
+        registerTouchInput('touch-item', 'fire');
+
+        window.addEventListener('resize', () => {
+            viewWidth = window.innerWidth; viewHeight = window.innerHeight;
+            if (camera && renderer) {
+                camera.aspect = viewWidth / viewHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(viewWidth, viewHeight);
+            }
+        });
+
+        // Inicialização Automática com FadeOut da Intro após Carregar Assets do Dom
+        window.onload = () => {
+            setTimeout(() => {
+                const intro = document.getElementById('scr-intro');
+                intro.style.opacity = '0';
+                setTimeout(() => {
+                    intro.classList.add('hidden');
+                    checkPersistentAuth();
+                }, 1000);
+            }, 2500);
+        };
     </script>
 </body>
 </html>
